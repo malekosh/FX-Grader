@@ -37,31 +37,32 @@ class viewer:
                                 [ 60,179,113], [255,235,205], [255,105,180], [165, 42, 42], [188,143,143],
                                 [255,235,205], [255,228,196], [218,165, 32], [  0,128,128] # rest unused     
                                 ])
+        self.v_dict = {
+        2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
+        8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
+        15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
+        21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
+    }
         if zeros:
             if Path(self.save_pth).is_file():
                 with open(self.save_pth) as json_data:
                     self.fx_gr = json.load(json_data)
                     json_data.close()
             else:
-                self.fx_gr = ['0' for i in self.ctd if type(i) is not tuple]
+                self.fx_gr = {self.v_dict[i[0]]:'0' for i in self.ctd if type(i) is not tuple}
             
             if Path(self.save_pth.replace('_fx-', '_ivd-')).is_file():
                 with open(self.save_pth.replace('_fx-', '_ivd-')) as json_data:
                     self.ivd_gr = json.load(json_data)
                     json_data.close()
             else:
-                self.ivd_gr  = ['0' for i in self.ctd if type(i) is not tuple]
+                self.ivd_gr  = {self.v_dict[i[0]]:'0' if v_dict[i[0]] in ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'] else ''  for i in self.ctd if type(i) is not tuple}
         else:
-            self.fx_gr = ['0' for i in self.ctd if type(i) is not tuple]
-            self.ivd_gr = ['0' for i in self.ctd if type(i) is not tuple]
+            self.fx_gr = {self.v_dict[i[0]]:'' for i in self.ctd if type(i) is not tuple}
+            self.ivd_gr = {self.v_dict[i[0]]:'' for i in self.ctd if type(i) is not tuple}
 
     def create_fig(self):
-        v_dict = {
-        2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
-        8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
-        15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
-        21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
-    }
+        
         def on_NEXT(b):
             ivd_values = [i.value for i in  self.values.children[2].children]
             values= [i.value for i in  self.values.children[1].children]
@@ -75,11 +76,11 @@ class viewer:
         def rgb2hex(col):
             return "#{:02x}{:02x}{:02x}".format(col[0],col[1],col[2])
         
-        boxes = [widgets.Text( value=self.fx_gr[v_dict[i[0]]],layout= Layout(width='60px', height='30px')) for i in self.ctd if type(i) is not tuple ]
-        boxes1 =[widgets.Text( value=self.ivd_gr[v_dict[i[0]]],layout= Layout(width='60px', height='30px')) for i in self.ctd if type(i) is not tuple ]
+        boxes = [widgets.Text( value=self.fx_gr[self.v_dict[i[0]]],layout= Layout(width='60px', height='30px')) for i in self.ctd if type(i) is not tuple ]
+        boxes1 =[widgets.Text( value=self.ivd_gr[self.v_dict[i[0]]],layout= Layout(width='60px', height='30px')) for i in self.ctd if type(i) is not tuple ]
 #         keys = [widgets.Text( value=v_dict[i[0]],layout= Layout(width='50px', height='30px') )for i in self.ctd if type(i) is not tuple ]
-        self.verts = [v_dict[i[0]] for i in self.ctd if type(i) is not tuple]
-        keys = [widgets.Label( value=r'\(\color{'+str(rgb2hex(self.colors[i[0]-1]))+ '}{' + v_dict[i[0]]  + '}\)',layout= Layout(width='50px', height='30px') )for i in self.ctd if type(i) is not tuple ]
+        self.verts = [self.v_dict[i[0]] for i in self.ctd if type(i) is not tuple]
+        keys = [widgets.Label( value=r'\(\color{'+str(rgb2hex(self.colors[i[0]-1]))+ '}{' + self.v_dict[i[0]]  + '}\)',layout= Layout(width='50px', height='30px') )for i in self.ctd if type(i) is not tuple ]
          
         left_box = widgets.VBox(boxes, description='FXG')
         
