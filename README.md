@@ -1,8 +1,7 @@
 # FX-Grader
 
 ## Dependncies and installation instructions
-
-Python 3
+Python 3.
 Jupyter Notebook / Jupyter lab from: https://jupyter.org/
 
 ### Python libraries
