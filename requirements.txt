@@ -1,0 +1,6 @@
+ipywidgets
+matplotlib
+nibabel
+scipy
+PIL
+pathlib
