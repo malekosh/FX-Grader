@@ -4,3 +4,4 @@ nibabel
 scipy
 PIL
 pathlib
+pandas

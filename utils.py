@@ -14,6 +14,8 @@ from matplotlib.patches import Circle
 import matplotlib as mpl
 import warnings
 from pathlib import Path
+import pandas as pd
+
 mpl.rcParams['savefig.pad_inches'] = 0
 v_dict = {
     1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
@@ -445,5 +447,40 @@ def get_paths(pth, ex, rater):
     return im_paths
 
 
+def save_csv(pth, rater):
+    fx_path = Path(pth).joinpath('FX-Grades_{}.csv'.format(rater))
+    ivd_path = Path(pth).joinpath('IVD-Grades_{}.csv'.format(rater))
+    
+    study_dir = Path(pth)
+    if study_dir.joinpath('derivatives').is_dir():
+        subject_dirs = sorted(study_dir.joinpath('derivatives').iterdir())
+    else:
+        subject_dirs = sorted(study_dir.iterdir())
 
+
+    all_fx_dicts = []
+    all_ivd_dicts = []
+    
+    files_fx = list(study_dir.rglob('*_fx-{}_res.json'.format(rater)))      
+    files_ivd = list(study_dir.rglob('*_ivd-{}_res.json'.format(rater)))   
+
+    for fx_pth in files_fx:
+        all_fx_dicts.append(load_json(fx_pth))         
+    for ivd_pth in files_fx:
+        all_fx_dicts.append(load_json(fx_pth)) 
+        
+    data_frame_fx  = pd.DataFrame(all_fx_dicts)
+    data_frame_fx.to_csv(fx_path)
+    
+    data_frame_ivd  = pd.DataFrame(all_ivd_dicts)
+    data_frame_ivd.to_csv(ivd_path)                
+
+def load_json(json_path):
+    name = Path(json_path).name
+    name = str(name).split('_')[0]
+    with open(json_path) as json_data:
+        js = json.load(json_data)
+        js['name'] = name
+        json_data.close()
+    return js
     
