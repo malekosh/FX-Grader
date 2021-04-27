@@ -15,6 +15,7 @@ import matplotlib as mpl
 import warnings
 from pathlib import Path
 import pandas as pd
+import math
 
 mpl.rcParams['savefig.pad_inches'] = 0
 v_dict = {
@@ -482,4 +483,39 @@ def load_json(json_path):
         js['name'] = name
         json_data.close()
     return js
+
+
+def get_result_jan(path,vert):
+    try:
+        grade_table = pd.read_excel(str(Path.cwd().joinpath('fx_jsk_verse.xlsx')))
+        ID = int(str(Path(path).name).split('_')[0][-3:])
+        gr = grade_table[vert][(grade_table["ID"] == int(ID))]
+        if not gr.empty:
+            if not math.isnan(gr):
+                gr = str(int(gr))
+            else:
+                gr = ''
+        else:
+            gr = ''
+        return gr
+    except Exception as e:
+        return ''
     
+def get_result_max(path,vert):
+    try:
+        if 'C' in vert:
+            return ''
+        grade_table = pd.read_excel(str(Path.cwd().joinpath('ryai190138_appendixe1.xlsx')),sheet_name= 'VerSe_dataset')
+        ID = int(str(Path(path).name).split('_')[0][-3:])
+        vert = vert + '_fx-s'
+        gr = grade_table[vert][(grade_table["verse_ID"] == ID)]
+        if not gr.empty:
+            if not math.isnan(gr):
+                gr = str(int(gr))
+            else:
+                gr = ''
+        else:
+            gr = ''
+        return gr
+    except Exception as e:
+        return ''

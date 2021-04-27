@@ -7,7 +7,7 @@ from pathlib import Path
 import json
 
 class viewer:
-    def __init__(self, img, sag, cor, zms, drr, ctd, save_pth,size,zeros):
+    def __init__(self, img, sag, cor, zms, drr, ctd, save_pth,size,zeros,load_rater):
         self.img = img
         self.sag = sag
         self.cor = cor
@@ -43,7 +43,16 @@ class viewer:
         15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
         21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
     }
-        if zeros:
+        if load_rater:
+            self.ivd_gr  = {self.v_dict[i[0]]:'0' if v_dict[i[0]] in ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'] else ''  for i in self.ctd if type(i) is not tuple}
+            if load_rater == 'jan':
+                self.fx_gr = {self.v_dict[i[0]]:get_result_jan(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
+            elif load_rater == 'max':
+                self.fx_gr = {self.v_dict[i[0]]:get_result_max(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
+            else:
+                self.fx_gr = {self.v_dict[i[0]]:'0' for i in self.ctd if type(i) is not tuple}
+            
+        elif zeros:
             if Path(self.save_pth).is_file():
                 with open(self.save_pth) as json_data:
                     self.fx_gr = json.load(json_data)
