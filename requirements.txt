@@ -2,6 +2,6 @@ ipywidgets
 matplotlib
 nibabel
 scipy
-PIL
+pillow
 pathlib
 pandas
