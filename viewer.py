@@ -45,10 +45,12 @@ class viewer:
     }
         if load_rater:
             self.ivd_gr  = {self.v_dict[i[0]]:'0' if v_dict[i[0]] in ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'] else ''  for i in self.ctd if type(i) is not tuple}
-            if load_rater == 'jan':
+            if load_rater.lower() == 'jan':
                 self.fx_gr = {self.v_dict[i[0]]:get_result_jan(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
-            elif load_rater == 'max':
+            elif load_rater.lower() == 'max':
                 self.fx_gr = {self.v_dict[i[0]]:get_result_max(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
+            elif load_rater.lower() == 'thomas':
+                self.fx_gr = {self.v_dict[i[0]]:get_result_thomas(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
             else:
                 self.fx_gr = {self.v_dict[i[0]]:'0' for i in self.ctd if type(i) is not tuple}
             

@@ -501,6 +501,22 @@ def get_result_jan(path,vert):
     except Exception as e:
         return ''
     
+def get_result_thomas(path,vert):
+    try:
+        grade_table = pd.read_excel(str(Path.cwd().joinpath('fx_thomas_verse.xlsx')))
+        ID = int(str(Path(path).name).split('_')[0][-3:])
+        gr = grade_table[vert][(grade_table["ID"] == int(ID))]
+        if not gr.empty:
+            if not math.isnan(gr):
+                gr = str(int(gr))
+            else:
+                gr = ''
+        else:
+            gr = ''
+        return gr
+    except Exception as e:
+        return ''
+    
 def get_result_max(path,vert):
     try:
         if 'C' in vert:
