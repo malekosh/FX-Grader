@@ -408,7 +408,7 @@ v_dict = {
     21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
 }
 
-def get_paths(pth, ex, rater):
+def get_paths(pth, ex, rater,chunks=None):
     
     im_paths = []
     study_dir = Path(pth)
@@ -422,12 +422,15 @@ def get_paths(pth, ex, rater):
     file_list=[]
 
     all_dicts = []
+    if chunks is not None:
+        subject_dirs = subject_dirs[(chunks*20):((chunks*20)+20)]
     for subject_dir in subject_dirs:                 # iterate over subjectdirs
         if not subject_dir.is_dir() or subject_dir.name[0] == '.':
             continue
         files = list(subject_dir.rglob('*_ct.nii.gz'))      # rglob will iterate over files indepentent from the presence of sessions
         if len(files) > 0:  # skip root_dirs and empty dirs
             files.sort()
+        
 
         for f_pth in files:
  
