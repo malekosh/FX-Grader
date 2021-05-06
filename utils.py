@@ -467,9 +467,9 @@ def save_csv(pth, rater):
     files_fx = list(study_dir.rglob('*_fx-{}_res.json'.format(rater)))      
     files_ivd = list(study_dir.rglob('*_ivd-{}_res.json'.format(rater)))   
 
-    for fx_pth in files_ivd:
+    for fx_pth in files_fx:
         all_fx_dicts.append(load_json(fx_pth))         
-    for ivd_pth in files_fx:
+    for ivd_pth in files_ivd:
         all_ivd_dicts.append(load_json(ivd_pth)) 
     data_frame_fx  = pd.DataFrame(all_fx_dicts)
     data_frame_fx.to_csv(fx_path)
