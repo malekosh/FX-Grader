@@ -35,6 +35,6 @@ jupyter labextension install @jupyter-widgets/jupyterlab-manager
 ### Ipywidgets installation documentation
 If you still have trouble getting Ippwidgets running, please refer to the installation documentation: 
 
-`https://ipywidgets.readthedocs.io/en/latest/user_install.html`
+https://ipywidgets.readthedocs.io/en/latest/user_install.html
 
 
