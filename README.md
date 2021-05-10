@@ -8,7 +8,6 @@
 3) install ipywidgets using conda prompt:
 ```
 conda install -c conda-forge ipywidgets
-
 ```
 4) Launch jupyterlab from Anaconda Navigator.
 
@@ -21,7 +20,6 @@ if you have installed the latest anacoda version this should be enough
 conda install nodejs -c conda-forge --repodata-fn=repodata.json
 
 conda install -c conda-forge ipywidgets
-
 ```
 3) check jupyterlab version using the command `jupyter --version`
 If jupyterlab is less than version 3.x, type the following command:
