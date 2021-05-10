@@ -15,7 +15,7 @@ conda install -c conda-forge ipywidgets
 if you have installed the latest anacoda version this should be enough
 
 ### MAC OS
-1) download and install anaconda: `https://docs.anaconda.com/anaconda/install/mac-os/`
+1) download and install anaconda: https://docs.anaconda.com/anaconda/install/mac-os/
 2) Install nodejs and Ipywidgets using:
 ```
 conda install nodejs -c conda-forge --repodata-fn=repodata.json
