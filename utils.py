@@ -430,11 +430,10 @@ def get_paths(pth, ex, rater,chunks=None):
         files = list(subject_dir.rglob('*_ct.nii.gz'))      # rglob will iterate over files indepentent from the presence of sessions
         if len(files) > 0:  # skip root_dirs and empty dirs
             files.sort()
-        
-
+            
         for f_pth in files:
  
-            if "rawdata" in  str(f_pth):
+            if "rawdata" in  str(f_pth) and not str(Path(f_pth).name).startswith('._'):
                 drv = Path(str(f_pth).replace("rawdata", "derivatives"))
                 msk_pth= drv.with_name(drv.name.replace("_ct.nii.gz", "_seg-vert_msk.nii.gz"))
                 ctd_pth = drv.with_name(drv.name.replace("_ct.nii.gz", "_seg-subreg_ctd.json"))
