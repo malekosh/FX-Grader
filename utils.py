@@ -18,8 +18,7 @@ import pandas as pd
 import math
 
 mpl.rcParams['savefig.pad_inches'] = 0
-v_dict = {
-    1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
+v_dict = {1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
     8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
     15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
     21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 26: 'Sacrum',
@@ -124,6 +123,7 @@ def process_data_snp(img_pth, msk_pth, ctd_pth):
     img_iso = reorient_to(img, axcodes_to=to_ax)
     msk_iso = reorient_to(msk, axcodes_to=to_ax)
     ctd_iso = reorient_centroids_to(ctd_list, img_iso)
+
     
     drr_iso = img_iso.get_fdata().copy()
     drr_iso[msk_iso.get_fdata()==0] = np.nan
@@ -402,7 +402,7 @@ def ax(slc):
     
     
 v_dict = {
-    2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
+    1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
     8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
     15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
     21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
