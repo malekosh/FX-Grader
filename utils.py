@@ -123,7 +123,6 @@ def process_data_snp(img_pth, msk_pth, ctd_pth):
     img_iso = reorient_to(img, axcodes_to=to_ax)
     msk_iso = reorient_to(msk, axcodes_to=to_ax)
     ctd_iso = reorient_centroids_to(ctd_list, img_iso)
-
     
     drr_iso = img_iso.get_fdata().copy()
     drr_iso[msk_iso.get_fdata()==0] = np.nan
@@ -131,8 +130,16 @@ def process_data_snp(img_pth, msk_pth, ctd_pth):
     drr = np.nansum(drr_iso,2)
     
     zms = img_iso.header.get_zooms()
+    try:
+        bsag_img_fx, bcor_img_fx, _, _, _ = sag_cor_curveprojection(ctd_iso, img_iso.get_fdata())
+    except Exception as e:
+        if len(ctd_iso)==2:
+            l = 1
+        else:
+            l = int(len(ctd_iso)/2)
+        bsag_img_fx = img_iso.get_fdata()[:,:,int(ctd_iso[l][3])]
+        bcor_img_fx = img_iso.get_fdata()[:,int(ctd_iso[l][2]),:]
     
-    bsag_img_fx, bcor_img_fx, _, _, _ = sag_cor_curveprojection(ctd_iso, img_iso.get_fdata())
     
     bsag_img_fx = make_isotropic2d(bsag_img_fx, (zms[0], zms[1]))
     bcor_img_fx = make_isotropic2d(bcor_img_fx, (zms[0], zms[2]))
