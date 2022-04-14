@@ -1,0 +1,200 @@
+[
+    {
+        "cal_type": "Async. Calibration for SIEMENS scanner, model Sensation Cardiac 64 at 120 kVp",
+        "ce_type": "ce-art"
+    },
+    [
+        {
+            "vBMD_trab-eroded_mean_17": 75.3,
+            "vBMD_trab-eroded_median_17": 72.1,
+            "vBMD_trab-eroded_sd_17": 42.4,
+            "vBMD_trab_mean_17": 78.4,
+            "vBMD_trab_median_17": 72.8,
+            "vBMD_trab_sd_17": 49.1,
+            "vBMD_body_mean_17": 148.8,
+            "vBMD_body_sd_17": 130.0,
+            "vBMD_body_cont_17": 2.93,
+            "HU_trab-eroded_mean_17": 116.7,
+            "HU_trab-eroded_median_17": 112.0,
+            "HU_trab-eroded_sd_17": 60.9,
+            "HU_trab_mean_17": 121.1,
+            "HU_trab_median_17": 113.0,
+            "HU_trab_sd_17": 70.6,
+            "HU_body_mean_17": 222.2,
+            "HU_body_sd_17": 186.9,
+            "HU_body_cont_17": 4.37
+        },
+        {
+            "vBMD_trab-eroded_mean_18": 74.2,
+            "vBMD_trab-eroded_median_18": 72.8,
+            "vBMD_trab-eroded_sd_18": 33.3,
+            "vBMD_trab_mean_18": 74.0,
+            "vBMD_trab_median_18": 72.8,
+            "vBMD_trab_sd_18": 35.5,
+            "vBMD_body_mean_18": 123.3,
+            "vBMD_body_sd_18": 93.2,
+            "vBMD_body_cont_18": 2.72,
+            "HU_trab-eroded_mean_18": 115.1,
+            "HU_trab-eroded_median_18": 113.0,
+            "HU_trab-eroded_sd_18": 47.8,
+            "HU_trab_mean_18": 114.8,
+            "HU_trab_median_18": 113.0,
+            "HU_trab_sd_18": 51.0,
+            "HU_body_mean_18": 185.6,
+            "HU_body_sd_18": 133.9,
+            "HU_body_cont_18": 4.1
+        },
+        {
+            "vBMD_trab-eroded_mean_19": 72.4,
+            "vBMD_trab-eroded_median_19": 71.4,
+            "vBMD_trab-eroded_sd_19": 42.7,
+            "vBMD_trab_mean_19": 71.3,
+            "vBMD_trab_median_19": 70.0,
+            "vBMD_trab_sd_19": 42.8,
+            "vBMD_body_mean_19": 124.4,
+            "vBMD_body_sd_19": 97.2,
+            "vBMD_body_cont_19": 3.16,
+            "HU_trab-eroded_mean_19": 112.4,
+            "HU_trab-eroded_median_19": 111.0,
+            "HU_trab-eroded_sd_19": 61.4,
+            "HU_trab_mean_19": 110.9,
+            "HU_trab_median_19": 109.0,
+            "HU_trab_sd_19": 61.5,
+            "HU_body_mean_19": 187.2,
+            "HU_body_sd_19": 139.7,
+            "HU_body_cont_19": 4.76
+        },
+        {
+            "vBMD_trab-eroded_mean_20": 72.0,
+            "vBMD_trab-eroded_median_20": 70.0,
+            "vBMD_trab-eroded_sd_20": 45.7,
+            "vBMD_trab_mean_20": 72.6,
+            "vBMD_trab_median_20": 70.7,
+            "vBMD_trab_sd_20": 45.9,
+            "vBMD_body_mean_20": 135.2,
+            "vBMD_body_sd_20": 117.4,
+            "vBMD_body_cont_20": 3.99,
+            "HU_trab-eroded_mean_20": 111.8,
+            "HU_trab-eroded_median_20": 109.0,
+            "HU_trab-eroded_sd_20": 65.7,
+            "HU_trab_mean_20": 112.7,
+            "HU_trab_median_20": 110.0,
+            "HU_trab_sd_20": 66.0,
+            "HU_body_mean_20": 202.7,
+            "HU_body_sd_20": 168.8,
+            "HU_body_cont_20": 5.98
+        },
+        {
+            "vBMD_trab-eroded_mean_21": 78.6,
+            "vBMD_trab-eroded_median_21": 71.4,
+            "vBMD_trab-eroded_sd_21": 56.7,
+            "vBMD_trab_mean_21": 78.4,
+            "vBMD_trab_median_21": 72.1,
+            "vBMD_trab_sd_21": 54.9,
+            "vBMD_body_mean_21": 146.5,
+            "vBMD_body_sd_21": 130.1,
+            "vBMD_body_cont_21": 4.55,
+            "HU_trab-eroded_mean_21": 121.3,
+            "HU_trab-eroded_median_21": 111.0,
+            "HU_trab-eroded_sd_21": 81.6,
+            "HU_trab_mean_21": 121.1,
+            "HU_trab_median_21": 112.0,
+            "HU_trab_sd_21": 78.9,
+            "HU_body_mean_21": 219.0,
+            "HU_body_sd_21": 187.0,
+            "HU_body_cont_21": 6.8
+        },
+        {
+            "vBMD_trab-eroded_mean_22": 71.9,
+            "vBMD_trab-eroded_median_22": 68.6,
+            "vBMD_trab-eroded_sd_22": 46.5,
+            "vBMD_trab_mean_22": 73.7,
+            "vBMD_trab_median_22": 70.7,
+            "vBMD_trab_sd_22": 46.4,
+            "vBMD_body_mean_22": 139.0,
+            "vBMD_body_sd_22": 127.8,
+            "vBMD_body_cont_22": 4.49,
+            "HU_trab-eroded_mean_22": 111.7,
+            "HU_trab-eroded_median_22": 107.0,
+            "HU_trab-eroded_sd_22": 66.8,
+            "HU_trab_mean_22": 114.4,
+            "HU_trab_median_22": 110.0,
+            "HU_trab_sd_22": 66.7,
+            "HU_body_mean_22": 208.2,
+            "HU_body_sd_22": 183.6,
+            "HU_body_cont_22": 6.72
+        },
+        {
+            "vBMD_trab-eroded_mean_23": 65.1,
+            "vBMD_trab-eroded_median_23": 63.0,
+            "vBMD_trab-eroded_sd_23": 46.4,
+            "vBMD_trab_mean_23": 71.8,
+            "vBMD_trab_median_23": 68.6,
+            "vBMD_trab_sd_23": 50.9,
+            "vBMD_body_mean_23": 144.8,
+            "vBMD_body_sd_23": 135.3,
+            "vBMD_body_cont_23": 4.72,
+            "HU_trab-eroded_mean_23": 102.0,
+            "HU_trab-eroded_median_23": 99.0,
+            "HU_trab-eroded_sd_23": 66.7,
+            "HU_trab_mean_23": 111.6,
+            "HU_trab_median_23": 107.0,
+            "HU_trab_sd_23": 73.2,
+            "HU_body_mean_23": 216.5,
+            "HU_body_sd_23": 194.5,
+            "HU_body_cont_23": 7.05
+        },
+        {
+            "vBMD_trab-eroded_mean_24": 75.8,
+            "vBMD_trab-eroded_median_24": 73.5,
+            "vBMD_trab-eroded_sd_24": 46.4,
+            "vBMD_trab_mean_24": 78.5,
+            "vBMD_trab_median_24": 74.9,
+            "vBMD_trab_sd_24": 51.5,
+            "vBMD_body_mean_24": 143.0,
+            "vBMD_body_sd_24": 121.6,
+            "vBMD_body_cont_24": 4.63,
+            "HU_trab-eroded_mean_24": 117.4,
+            "HU_trab-eroded_median_24": 114.0,
+            "HU_trab-eroded_sd_24": 66.6,
+            "HU_trab_mean_24": 121.3,
+            "HU_trab_median_24": 116.0,
+            "HU_trab_sd_24": 74.0,
+            "HU_body_mean_24": 214.0,
+            "HU_body_sd_24": 174.8,
+            "HU_body_cont_24": 6.93
+        },
+        {
+            "PHT_mean_17": 133.4,
+            "PHT_std_17": 71.6
+        },
+        {
+            "PHT_mean_18": 123.2,
+            "PHT_std_18": 56.2
+        },
+        {
+            "PHT_mean_19": 113.0,
+            "PHT_std_19": 63.5
+        },
+        {
+            "PHT_mean_20": 111.8,
+            "PHT_std_20": 67.2
+        },
+        {
+            "PHT_mean_21": 142.4,
+            "PHT_std_21": 92.4
+        },
+        {
+            "PHT_mean_22": 110.2,
+            "PHT_std_22": 64.4
+        },
+        {
+            "PHT_mean_23": 100.0,
+            "PHT_std_23": 66.0
+        },
+        {
+            "PHT_mean_24": 131.5,
+            "PHT_std_24": 82.6
+        }
+    ]
+]

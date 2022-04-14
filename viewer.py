@@ -5,19 +5,34 @@ from utils import *
 from IPython.display import display, clear_output
 from pathlib import Path
 import json
+import pandas as pd
 
 class viewer:
-    def __init__(self, img, sag, cor, zms, drr, ctd, save_pth,size,zeros,load_rater):
+    def __init__(self, param_list, exclude_c=False, display_coronal=True):
+        b_img_path, f_img_path, img, fimg, sag1, sag2, zms, fzms, sub1, sub2, ctd, fctd,bcor_img_, fcor_img_, save_pth, size, fsize, zeros, load_rater, img_pth, fimg_pth = param_list
+        self.database = pd.read_csv(save_pth, dtype=str)
+        self.b_img_path = b_img_path
+        self.f_img_path = f_img_path
         self.img = img
-        self.sag = sag
-        self.cor = cor
+        self.fimg = fimg
+        self.sag1 = sag1
+        self.sag2 = sag2
+        self.bcor = bcor_img_
+        self.fcor = fcor_img_
         self.zms = zms
-        self.drr = drr
+        self.fzms = fzms
+        self.sub1 = sub1
+        self.sub2 = sub2
         self.ctd = ctd
+        self.fctd = fctd
         self.save_pth = save_pth
         self.values = ['']*(len(ctd)-1)
         self.verts = []
         self.size =size
+        self.fsize =fsize
+        self.display_coronal = display_coronal
+        self.bname = os.path.basename(str(img_pth)).replace('_ct.nii.gz','')
+        self.fname = os.path.basename(str(fimg_pth)).replace('_ct.nii.gz','')
         self.colors = np.array([
                                 [255,  0,  0], [  0,255,  0], [  0,  0,255], [255,255,  0], [  0,255,255],
                                 [255,  0,255], [255,239,213],  # Label 1-7 (C1-7)
@@ -37,93 +52,129 @@ class viewer:
                                 [ 60,179,113], [255,235,205], [255,105,180], [165, 42, 42], [188,143,143],
                                 [255,235,205], [255,228,196], [218,165, 32], [  0,128,128] # rest unused     
                                 ])
+        ctd_dict1 = {x[0] : [x[1], x[2], x[3]] for x in ctd[1:]}
+        ctd_dict2 = {x[0] : [x[1], x[2], x[3]] for x in fctd[1:]}
+        self.full_ctd =  list(set(list(ctd_dict1.keys())+list(ctd_dict2.keys())))
+        self.display_ctd = self.full_ctd.copy()
+        if exclude_c:
+            self.display_ctd = [x for x in self.full_ctd if x>7]
         self.v_dict = {
         1:'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
         8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
         15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
         21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
     }
-        if load_rater:
-            self.ivd_gr  = {self.v_dict[i[0]]:'0' if v_dict[i[0]] in ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'] else ''  for i in self.ctd if type(i) is not tuple}
-            if load_rater.lower() == 'jan':
-                self.fx_gr = {self.v_dict[i[0]]:get_result_jan(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
-            elif load_rater.lower() == 'max':
-                self.fx_gr = {self.v_dict[i[0]]:get_result_max(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
-            elif load_rater.lower() == 'thomas':
-                self.fx_gr = {self.v_dict[i[0]]:get_result_thomas(save_pth,self.v_dict[i[0]]) for i in self.ctd if type(i) is not tuple}
-            else:
-                self.fx_gr = {self.v_dict[i[0]]:'0' for i in self.ctd if type(i) is not tuple}
-            
-        elif zeros:
-            if Path(self.save_pth).is_file():
-                with open(self.save_pth) as json_data:
-                    self.fx_gr = json.load(json_data)
-                    json_data.close()
-            else:
-                self.fx_gr = {self.v_dict[i[0]]:'0' for i in self.ctd if type(i) is not tuple}
-            
-            if Path(self.save_pth.replace('_fx-', '_ivd-')).is_file():
-                with open(self.save_pth.replace('_fx-', '_ivd-')) as json_data:
-                    self.ivd_gr = json.load(json_data)
-                    json_data.close()
-            else:
-                self.ivd_gr  = {self.v_dict[i[0]]:'0' if v_dict[i[0]] in ['L1', 'L2', 'L3', 'L4', 'L5', 'L6'] else ''  for i in self.ctd if type(i) is not tuple}
+        id_bs = str(os.path.basename(b_img_path).replace('_ct.nii.gz', ''))
+        id_fu = str(os.path.basename(f_img_path).replace('_ct.nii.gz', ''))
+        if id_bs in self.database.ID.values:
+            self.bs_presence = "## Baseline already graded - press save to overwrite\n"
         else:
-            self.fx_gr = {self.v_dict[i[0]]:'' for i in self.ctd if type(i) is not tuple}
-            self.ivd_gr = {self.v_dict[i[0]]:'' for i in self.ctd if type(i) is not tuple}
+            self.bs_presence = ""
+        
+        if id_fu in self.database.ID.values:
+            self.fu_presence = "## Followup already graded - press save to overwrite"
+        else:
+            self.fu_presence = ""
+        self.initial_disp_txt = self.bs_presence + self.fu_presence
+        
+        if load_rater:
+            self.bs_gr = {self.v_dict[i]:get_results_fu(self.b_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
+            self.fu_gr  = {self.v_dict[i]:get_results_fu(self.f_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
+            
+        else:
+            con_full_list = [self.v_dict[i] for i in self.full_ctd]
+            if id_bs in self.database.ID.values:
+                dictt = self.database[self.database['ID']==id_bs].replace({np.nan:''}).to_dict(orient='records')
+                
+                self.bs_gr = {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list }
+                
+            else:
+                self.bs_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
+            if id_fu in self.database.ID.values:
+                dictt = self.database[self.database['ID']==id_fu].replace({np.nan:''}).to_dict(orient='records')
+                
+                self.fu_gr =  {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list}
+            else:
+                self.fu_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
+                         
+        
 
     def create_fig(self):
         
         def on_NEXT(b):
-            ivd_values = [i.value for i in  self.values.children[2].children]
-            values= [i.value for i in  self.values.children[1].children]
-            keys =[i for i in  self.verts]
-            new_dict= {x:y for x,y in zip(keys,values)}
-            ivd_dict = {x:y for x,y in zip(keys,ivd_values)}
-            save_json(new_dict, self.save_pth)
-            save_json(ivd_dict, self.save_pth.replace('_fx-', '_ivd-'))
-            clear_output()
+            fu_values = [i.value for i in  self.values.children[2].children]
+            bs_values= [i.value for i in  self.values.children[1].children]
+            
+            keys =[i for i in  self.full_ctd]
+            bs_dict= {self.v_dict[x]:str(y) for x,y in zip(keys,bs_values)}
+            saved1 = populate_database(self.save_pth, bs_dict, self.b_img_path,'baseline')
+            fu_dict = {self.v_dict[x]:str(y) for x,y in zip(keys,fu_values)}
+            saved2 = populate_database(self.save_pth, fu_dict, self.f_img_path,'followup')
+            self.header1.value= '### Evaluation Saved!!'
+
             
         def rgb2hex(col):
             return "#{:02x}{:02x}{:02x}".format(col[0],col[1],col[2])
         
-        boxes = [widgets.Text( value=self.fx_gr[self.v_dict[i[0]]],layout= Layout(width='60px', height='30px')) for i in self.ctd if type(i) is not tuple ]
-        boxes1 =[widgets.Text( value=self.ivd_gr[self.v_dict[i[0]]],layout= Layout(width='60px', height='30px')) for i in self.ctd if type(i) is not tuple ]
+        boxes = [widgets.Text( value=self.bs_gr[self.v_dict[i]],layout= Layout(width='45px', height='20px')) for i in self.display_ctd if type(i) is not tuple ]
+        boxes1 =[widgets.Text( value=self.fu_gr[self.v_dict[i]],layout= Layout(width='45px', height='20px')) for i in self.display_ctd if type(i) is not tuple ]
 #         keys = [widgets.Text( value=v_dict[i[0]],layout= Layout(width='50px', height='30px') )for i in self.ctd if type(i) is not tuple ]
         self.verts = [self.v_dict[i[0]] for i in self.ctd if type(i) is not tuple]
-        keys = [widgets.Label( value=r'\(\color{'+str(rgb2hex(self.colors[i[0]-1]))+ '}{' + self.v_dict[i[0]]  + '}\)',layout= Layout(width='50px', height='30px') )for i in self.ctd if type(i) is not tuple ]
+        keys = [widgets.Label( value=r'\(\color{'+str(rgb2hex(self.colors[i-1]))+ '}{' + self.v_dict[i]  + '}\)',layout= Layout(width='45px', height='20px') )for i in self.display_ctd if type(i) is not tuple ]
          
         left_box = widgets.VBox(boxes, description='FXG')
         
         right_box = widgets.VBox(keys, description='vert')
         ivd_box = widgets.VBox(boxes1, description='IVD')
-        ph=widgets.HBox([right_box,left_box,ivd_box ], layout=Layout(top='40px', height='100%'))  
+        ph=widgets.HBox([right_box,left_box ,ivd_box], layout=Layout(top='40px', height='100%'))  
 
-
+        width = '5'
         # x = save_dict()
-        grid = GridspecLayout(1, 6, height='auto')
-        grid[0, 0] = widgets.interactive(sag_f, slc=widgets.IntSlider(min=0, max=self.img.shape[2]-1, step =1, value=int(self.img.shape[2]/2),layout=Layout(width='120%',left='-25px')),img=fixed(self.img),zms=fixed(self.zms),layout= Layout(width='12%',height='100%'))
-        grid[0, 1] = widgets.interactive(cor_f, slc=widgets.IntSlider(min=0, max=self.img.shape[1]-1, step =1, value=int(self.img.shape[1]/2),layout=Layout(width='120%',left='-25px')),img=fixed(self.img),zms=fixed(self.zms),size=fixed(self.size),layout= Layout(width='12%',height='100%'))
-        grid[0, 2] = widgets.interactive(sag_drr, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')), drr=fixed(self.drr),layout= Layout(width='12%',height='100%'))
-        grid[0, 3] = widgets.interactive(sag_i, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')) , sag=fixed(self.sag) ,layout= Layout(width='12%',height='100%'))
-        grid[0, 4] = widgets.interactive(cor_i, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')), cor=fixed(self.cor),layout= Layout(width='12%',height='100%'))
-        grid[0, 5] = ph
-        self.values = grid[0, 5]
+        if self.display_coronal:
+            views = 9
+            c1,c2,c3,c4, c5 = 4,5,6,7,8
+        else:
+            views = 7
+            c1,c2,c3,c4, c5 = 0,0,4,5,6
+        grid = GridspecLayout(1, views, height='auto')
+        grid[0, 0] = widgets.interactive(sag_f, slc=widgets.IntSlider(min=0, max=self.img.shape[2]-1, step =1, value=int(self.img.shape[2]/2),layout=Layout(width='120%',left='-25px')),img=fixed(self.img),zms=fixed(self.zms),layout= Layout(width='{}%'.format(width),height='100%'))
+        grid[0, 1] = widgets.interactive(sag_f, slc=widgets.IntSlider(min=0, max=self.fimg.shape[2]-1, step =1, value=int(self.fimg.shape[2]/2),layout=Layout(width='120%',left='-25px')),img=fixed(self.fimg),zms=fixed(self.fzms),size=fixed(self.size),layout= Layout(width='{}%'.format(width),height='100%'))
+        grid[0, 2] = widgets.interactive(sag_i, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')), sag=fixed(self.sag1),layout= Layout(width='{}%'.format(width),height='100%'))
+        grid[0, 3] = widgets.interactive(sag_i, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')) , sag=fixed(self.sag2) ,layout= Layout(width='{}%'.format(width),height='100%'))
+        if self.display_coronal:
+            grid[0, c1] = widgets.interactive(cor_i, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')), cor=fixed(self.bcor),layout= Layout(width='{}%'.format(width),height='100%'))
+            grid[0, c2] = widgets.interactive(cor_i, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')), cor=fixed(self.fcor),layout= Layout(width='{}%'.format(width),height='100%'))
+        
+        grid[0, c3] = widgets.interactive(sag_drr, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')), drr=fixed(self.sub1),layout= Layout(width='{}%'.format(width),height='100%'))
+        grid[0, c4] = widgets.interactive(cor_i, x=widgets.IntSlider(min=0, max=1, step =1, value=0, layout=Layout(visibility='hidden',width='100%')), cor=fixed(self.sub2),layout= Layout(width='{}%'.format(width),height='100%'))
+        grid[0, c5] = ph
+        self.values = grid[0, c5]
 
-
+        head = Button(description='{} - {}'.format(self.bname,self.fname),
+                         layout=Layout(width='auto', grid_area='header'),
+                         style=ButtonStyle(button_color='black'))
+        
         header  = Button(description='Save and Continue',
                          layout=Layout(width='auto', grid_area='footer'),
-                         style=ButtonStyle(button_color='red'))
+                         style=ButtonStyle(button_color='gray'))
+#         header1  = Button(description='di fi',
+#                          layout=Layout(width='auto', grid_area='display'),
+#                          style=ButtonStyle(button_color='gray'))
+        
+        self.header1  = widgets.Textarea(value=self.initial_disp_txt,
+                         layout=Layout(width='auto', grid_area='display'))
+        
         header.on_click(on_NEXT)
-        grd = GridBox(children=[grid, header],
+        grd = GridBox(children=[head, grid, header, self.header1],
                 layout=Layout(
-                    width='100%',
+                    width='auto',
                     grid_template_rows='auto auto',
                     grid_template_columns='100%',
                     grid_template_areas='''
                     "header header header header"
                     "main main . sidebar "
                     "footer footer footer footer"
+                    "display display display display"
                     ''')
                )
         return grd

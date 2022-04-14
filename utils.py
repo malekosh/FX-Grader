@@ -16,6 +16,9 @@ import warnings
 from pathlib import Path
 import pandas as pd
 import math
+import time
+from copy import deepcopy
+from skimage.transform import resize
 
 mpl.rcParams['savefig.pad_inches'] = 0
 v_dict = {1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
@@ -50,12 +53,103 @@ cm_itk.set_bad(color='w', alpha=0)
 wdw_sbone = Normalize(vmin=-500, vmax=1300, clip=True)
 wdw_hbone = Normalize(vmin=-200, vmax=1000, clip=True)
 
-def reorient_to(img, axcodes_to=('P', 'I', 'R'), verb=False):
+cm_sr = (1/255)*np.array([
+        [104,159,56], [ 216,67,28] 
+        ])
+    
+
+cm_sr = ListedColormap(cm_sr)
+cm_sr.set_bad(color='w', alpha=0)
+
+
+cm_bmd_co = (1/255)*np.array([
+        [0,0,0],[104,159,56], [255,179,0], [ 216,67,28], [183,28,28], # green, yellow, red, dark red for >120, >80, >50, <50
+        ])
+
+
+    
+
+cm_bmd = ListedColormap(cm_bmd_co)
+cm_bmd.set_bad(color='w', alpha=0)
+
+colors_labels = (1/255)*np.array([
+    [  0,  0,  0],  #   
+    [230,255,  0],  #   "Label 1"
+    [255,247,  0],  #   "Label 3"
+    [255,162,  0],  #   "Label 5"
+    [255,  0, 12],  #   "Label 4"
+    [166,  0,255],  #   "Label 5"
+    [  0,  0,255],  #   "Label 6"
+    [ 20,108,  0],  #   "Label 7"
+    ])
+
+
+cm_labl = ListedColormap(colors_labels)
+cm_labl.set_bad(color='w', alpha=0)  # set NaN to full opacity for overlay
+
+def plot_bmd_label(axs, ctd, zms, bmd_val, size=3, text=True):
+    # requires v_dict = dictionary of mask labels and a pd dataframe with labels "ctd_labels"
+    try:
+        bmd_val = float(bmd_val)
+
+        if bmd_val > 120:
+            bmd = 1
+        elif bmd_val > 80:
+            bmd = 2
+        elif bmd_val > 50:
+            bmd = 3
+        else:
+            bmd = 4
+#         print('bmd ', bmd)
+        for v in ctd[1:]:
+            if v[0] ==22:
+                axs.add_patch(Circle((v[2]*zms[1], v[1]*zms[0]), size, color=cm_bmd_co[bmd]))
+                if text:
+                    axs.text(v[2]*zms[1]- 40, v[1]*zms[0]+2, str(bmd_val), fontdict={'color': cm_bmd(bmd), 'weight': 'bold'}, backgroundcolor='black')
+    except Exception as e:
+        pass
+    
+    
+def initialize_database(rater):
+    csv_path = 'CTFU_Fx_{}.csv'.format(rater)
+    if not os.path.isfile(csv_path):
+        columns = ['ID', 'type', 'ce', 
+                   'C1', 'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 
+                   'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
+                   'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'T13']
+        df = pd.DataFrame(columns= columns)
+        df.to_csv(csv_path, index=False)
+    return csv_path
+        
+def populate_database(database_path, fx_dict, img_path, typ):
+    print(database_path)
+    df = pd.read_csv(database_path)
+    fx_dict['ID'] = str(os.path.basename(img_path).replace('_ct.nii.gz', ''))
+    if fx_dict['ID'] in df.ID.values:
+        idx = df.index[df['ID']==fx_dict['ID']].tolist()
+        df = df.drop(index=idx, axis=0)# = fx
+    fx_dict['ce'] = get_ce(img_path)
+    fx_dict['type'] = typ
+    df = df.append(fx_dict, ignore_index=True)
+    df.to_csv(database_path, index=False)
+    return True
+
+def get_ce(pth):
+    try:
+        ce = str(pth).split('ce-')[1].split('_')[0]
+    except Exception:
+        ce = ''
+    return ce
+
+def reorient_to(img, axcodes_to=('P', 'I', 'R'), verb=False, msk=True):
     
     # Note: nibabel axes codes describe the direction not origin of axes
     # direction PIR+ = origin ASL
     aff = img.affine
-    arr = np.asanyarray(img.dataobj, dtype=img.dataobj.dtype)
+    if msk:
+        arr = np.asanyarray(img.dataobj, dtype=img.dataobj.dtype)
+    else:
+        arr = img.get_fdata()
     ornt_fr = nio.io_orientation(aff)
     ornt_to = nio.axcodes2ornt(axcodes_to)
     ornt_trans = nio.ornt_transform(ornt_fr, ornt_to)
@@ -67,127 +161,371 @@ def reorient_to(img, axcodes_to=('P', 'I', 'R'), verb=False):
         print("[*] Image reoriented from", nio.ornt2axcodes(ornt_fr), "to", axcodes_to)
     return newimg
 
-def crop_all(img, msk, ctd):
-    ex_slc, o_shift = crop_slice(msk, dist=2)
-    ctd = crop_centroids(ctd, o_shift)
-    img = img.slicer[ex_slc]
-    msk = msk.slicer[ex_slc]
-        
-    return img, msk, ctd
 
-def crop_slice(msk, dist=10):
-    shp = msk.dataobj.shape
-    zms = msk.header.get_zooms()
-    d = np.around(dist / np.asarray(zms)).astype(int)
-    msk_bin = np.asanyarray(msk.dataobj, dtype=bool)
-    msk_bin[np.isnan(msk_bin)] = 0
-    cor_msk = np.where(msk_bin > 0)
-    c_min = [cor_msk[0].min(), cor_msk[1].min(), cor_msk[2].min()]
-    c_max = [cor_msk[0].max(), cor_msk[1].max(), cor_msk[2].max()]
-    x0 = c_min[0]-d[0] if (c_min[0]-d[0]) > 0 else 0
-    y0 = c_min[1]-d[1] if (c_min[1]-d[1]) > 0 else 0
-    z0 = c_min[2]-d[2] if (c_min[2]-d[2]) > 0 else 0
-    x1 = c_max[0]+d[0] if (c_max[0]+d[0]) < shp[0] else shp[0]
-    y1 = c_max[1]+d[1] if (c_max[1]+d[1]) < shp[1] else shp[1]
-    z1 = c_max[2]+d[2] if (c_max[2]+d[2]) < shp[2] else shp[2]
-    ex_slice = tuple([slice(x0, x1), slice(y0, y1), slice(z0, z1)])
-    origin_shift = tuple([x0, y0, z0])
-    return ex_slice, origin_shift
+def get_paddings(msk1, msk2, ctd1, ctd2):
+
+    rat_pad_1_1, rat_pad_1_2 = 0, 0
+    rat_pad_2_1, rat_pad_2_2 = 0, 0
+    
+    ctd_dict1 = {x[0] : [x[1], x[2], x[3]] for x in ctd1[1:]}
+    ctd_dict2 = {x[0] : [x[1], x[2], x[3]] for x in ctd2[1:]}
+
+    if msk2.shape[1] > msk1.shape[1]:
+        rat_pad_1_1 = len([x for x in ctd_dict2.keys() if x<min(list(ctd_dict1.keys()))])
+        rat_pad_1_2 = len([x for x in ctd_dict2.keys() if x>max(list(ctd_dict1.keys()))])
+
+        to_pad_tot = msk2.shape[1] - msk1.shape[1]
+        rat_pad_1_1 = (rat_pad_1_1/(rat_pad_1_1 + rat_pad_1_2)) * to_pad_tot
+        rat_pad_1_2 = (rat_pad_1_2/(rat_pad_1_1 + rat_pad_1_2)) * to_pad_tot
+
+    if msk1.shape[1] > msk2.shape[1] > 0:
+        to_pad_tot = msk1.shape[1] - msk2.shape[1]
+        rat_pad_2_1 = len([x for x in ctd_dict1.keys() if x<min(list(ctd_dict2.keys()))])
+        rat_pad_2_2 = len([x for x in ctd_dict1.keys() if x>max(list(ctd_dict2.keys()))])
+
+        rat_pad_2_1 = (rat_pad_2_1/(rat_pad_2_1 + rat_pad_2_2)) * to_pad_tot
+        rat_pad_2_2 = (rat_pad_2_2/(rat_pad_2_1 + rat_pad_2_2)) * to_pad_tot
 
 
-def crop_centroids(ctd_list, o_shift):
-    for v in ctd_list[1:]:
-        v[1] = v[1] - o_shift[0]
-        v[2] = v[2] - o_shift[1]
-        v[3] = v[3] - o_shift[2]
-    return ctd_list
-
-def create_figure_1(dpi, planes, size=None):
-    fig_h = round(2 * planes.shape[0] / dpi, 2)
-    fig_w = round(2 * planes.shape[1] / dpi, 2)
-    if size:
-        s = size
+    if msk2.shape[0] > msk1.shape[0]:
+        to_pad_rl_1 = msk2.shape[0] - msk1.shape[0]
+        to_pad_rl_2 = 0
+    elif msk1.shape[0]>  msk2.shape[0]:
+        to_pad_rl_2 = msk1.shape[0] - msk2.shape[0]
+        to_pad_rl_1 = 0
     else:
-        s=(fig_w, fig_h)
-    fig, axs = plt.subplots(1, 1,figsize=s )
-    axs.axis('off')
-    return fig, axs, (fig_w,fig_h)
+        to_pad_rl_1,  to_pad_rl_2= 0, 0
+        
+    if msk2.shape[2] > msk1.shape[2]:
+        to_pad_io_1 = msk2.shape[2] - msk1.shape[2]
+        to_pad_io_2 = 0
+    elif msk1.shape[2]>  msk2.shape[2]:
+        to_pad_io_2 = msk1.shape[2] - msk2.shape[2]
+        to_pad_io_1 = 0
+    else:
+        to_pad_io_1,  to_pad_io_2= 0, 0
+        
+    return rat_pad_1_1, rat_pad_1_2, rat_pad_2_1, rat_pad_2_2, to_pad_rl_1, to_pad_rl_2, to_pad_io_1,  to_pad_io_2
 
-def process_data_snp(img_pth, msk_pth, ctd_pth):
-    img = nib.load(img_pth)
-    msk = nib.load(msk_pth)
-    ctd_list = load_centroids(ctd_pth)
+def pad_arr(arr1, arr2, pads, msk=False):
+    if not msk:
+        cnst = (-1024)
+    else:
+        cnst = (0)
     
-    img, msk, ctd_list = crop_all(img, msk, ctd_list)
+    new_arr1 = np.pad(
+        arr1,
+        [(0, int(pads[4])), (int(pads[0]), int(pads[1])), (0, int(pads[6]))],
+        mode='constant',
+        constant_values = cnst
+    )
+    new_arr2 = np.pad(
+        arr2,
+        [(0, pads[5]), (pads[2], pads[3]), (0, pads[7])],
+        mode='constant',
+        constant_values = cnst
+    )
+    return new_arr1, new_arr2
+
+def pad_ctds(ctd1, ctd2, pads):
+    new_ctd1 = [[x[0], x[1], x[2]+pads[0], x[3]] if isinstance(x,list) else x for x in  ctd1]
+    
+    new_ctd2 = [[x[0], x[1], x[2]+pads[2], x[3]] if isinstance(x,list) else x for x in  ctd2]
+    return new_ctd1, new_ctd2
+
+def pad_niftis(bimg, bmsk,sr, fimg, fmsk, res, bctd, fctd):
+    bimg_data = bimg.get_fdata()
+    bmsk_data = np.asanyarray(bmsk.dataobj, dtype=bmsk.dataobj.dtype)
+    fimg_data = fimg.get_fdata()
+    fmsk_data = np.asanyarray(fmsk.dataobj, dtype=fmsk.dataobj.dtype)
+    
+
+
+    res_data = np.asanyarray(res.dataobj, dtype=res.dataobj.dtype)
+    sr_arr = np.asanyarray(sr.dataobj, dtype=sr.dataobj.dtype)
+    
+    pads = get_paddings(bmsk_data,fmsk_data,bctd,fctd)
+
+    bimg_data, fimg_data =  pad_arr(bimg_data, fimg_data, pads, msk=False)
+
+    bmsk_data, fmsk_data =  pad_arr(bmsk_data, fmsk_data, pads, msk=True)
+    sr_arr, _ = pad_arr(sr_arr, sr_arr, pads, msk=True)
+    res_data, _ = pad_arr(res_data, res_data, pads, msk=True)
+    
+    bctd1, fctd1 = pad_ctds(bctd, fctd, pads)
+    
+    bimg1 = nib.Nifti1Image(bimg_data,bimg.affine)
+    bmsk1 = nib.Nifti1Image(bmsk_data,bmsk.affine)
+    res1 = nib.Nifti1Image(res_data,res.affine)
+    sr1 = nib.Nifti1Image(sr_arr,sr.affine)
+    fimg1 = nib.Nifti1Image(fimg_data,fimg.affine)
+    fmsk1 = nib.Nifti1Image(fmsk_data,fmsk.affine)
+    return bimg1, bmsk1,sr1, fimg1, fmsk1, res1, bctd1, fctd1 
+
+
+
+def get_csv_entry(img_path):
+    csv_name = os.path.basename(img_path)
+    parts = csv_name.split('_')
+    name = parts[0] + '_' + parts[1]
+    return name
+    
+
+def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, fctd_pth, sub_path, labels, dpi=120):
+    
+    b_csv_entry = get_csv_entry(img_pth)
+    f_csv_entry = get_csv_entry(fimg_pth)
+    
+    b_labels  = labels[labels['ID']==b_csv_entry]
+    f_labels  = labels[labels['ID']==f_csv_entry]
+    
+    bimg = nib.load(img_pth)
+    bmsk = nib.load(msk_pth)
+    bctd = load_centroids(ctd_pth)
+    sub = nib.load(sub_path)
+    sr = nib.load(sr_pth)
+    
+    fimg = nib.load(fimg_pth)
+    fmsk = nib.load(fmsk_pth)
+    fctd = load_centroids(fctd_pth)
+
+    
+    
+    
+    bimg, bmsk,sr, fimg, fmsk, sub, bctd, fctd = pad_niftis(bimg, bmsk,sr, fimg, fmsk, sub, bctd, fctd)
+    
     to_ax = ('I', 'A', 'L')
-    img_iso = reorient_to(img, axcodes_to=to_ax)
-    msk_iso = reorient_to(msk, axcodes_to=to_ax)
-    ctd_iso = reorient_centroids_to(ctd_list, img_iso)
+    bimg = reorient_to(bimg, axcodes_to=to_ax, msk=False)
+    bmsk = reorient_to(bmsk, axcodes_to=to_ax)
+    sr = reorient_to(sr, axcodes_to=to_ax)
+    sub = reorient_to(sub, axcodes_to=to_ax, msk=False)
+    bctd = reorient_centroids_to(bctd, bimg)
+
     
-    drr_iso = img_iso.get_fdata().copy()
-    drr_iso[msk_iso.get_fdata()==0] = np.nan
     
-    drr = np.nansum(drr_iso,2)
     
-    zms = img_iso.header.get_zooms()
+    fimg = reorient_to(fimg, axcodes_to=to_ax, msk=False)
+    fmsk = reorient_to(fmsk, axcodes_to=to_ax)
+    fctd = reorient_centroids_to(fctd, fimg)
+    
+    zms = (1,1,1)
+    bzms = (1,1,1)
+    fzms = (1,1,1)
+  
+    
+    bimg_data = bimg.get_fdata()
+    bmsk_data = np.asanyarray(bmsk.dataobj, dtype=bmsk.dataobj.dtype)
+    fimg_data = fimg.get_fdata()
+    fmsk_data = np.asanyarray(fmsk.dataobj, dtype=fmsk.dataobj.dtype)
+    
+
+
+    res_data = np.asanyarray(sub.dataobj, dtype=sub.dataobj.dtype)
+
+    
     try:
-        bsag_img_fx, bcor_img_fx, _, _, _ = sag_cor_curveprojection(ctd_iso, img_iso.get_fdata())
+        bsag_img, bcor_img, _, _, _ = sag_cor_curveprojection(bctd, bimg_data)
+        bsag_msk, bcor_msk, y_cord, z_cord, x_ctd = sag_cor_curveprojection(bctd, bmsk_data)
+        res_im, res_cor, _, _, _ = sag_cor_curveprojection(bctd, res_data)
+
+        bsag_img, res_im, new_bctd = create_interpolated_im(bsag_img,res_im,x_ctd,z_cord,30,bctd)
+        _, bsag_msk, _ = create_interpolated_im(bsag_img,bsag_msk,x_ctd,z_cord,30,bctd)
+        bcor_img, res_cor, new_bcent_cor = create_interpolated_im(bcor_img,res_cor,x_ctd,y_cord,30,bctd)
+        _, bcor_msk, _ = create_interpolated_im(bcor_img,bcor_msk,x_ctd,y_cord,30,bctd)
+
+        
     except Exception as e:
-        if len(ctd_iso)==2:
+        if len(bctd)==2:
             l = 1
         else:
-            l = int(len(ctd_iso)/2)
-        bsag_img_fx = img_iso.get_fdata()[:,:,int(ctd_iso[l][3])]
-        bcor_img_fx = img_iso.get_fdata()[:,int(ctd_iso[l][2]),:]
-    
-    
-    bsag_img_fx = make_isotropic2d(bsag_img_fx, (zms[0], zms[1]))
-    bcor_img_fx = make_isotropic2d(bcor_img_fx, (zms[0], zms[2]))
-    drr = make_isotropic2d(drr, (zms[0], zms[1]))
-    
-    fig, axs, size = create_figure_1(120,bsag_img_fx,None)
+            l = int(len(bctd)/2)
+        bsag_img = bimg_data[:,:,int(bctd[l][3])]
+        bsag_msk = bmsk_data[:,:,int(bctd[l][3])]
+        bcor_img = bimg_data[:,int(bctd[l][2]),:]
+        bcor_msk = bmsk_data[:,int(bctd[l][2]),:]
+        res_cor = res_data[:,int(bctd[l][2]),:]
+        new_bctd = bctd
+        new_bcent_cor = bctd
+        res_im = res_data[:,int(bctd[l][2]),:]
+        
+       
+    try:
+        fsag_img, fcor_img,y_cord, z_cord, x_ctd = sag_cor_curveprojection(fctd, fimg_data)
+        fsag_img, _, new_fctd = create_interpolated_im(fsag_img,fsag_img,x_ctd,z_cord,30,fctd)
+        fcor_img, _, new_fcent_cor = create_interpolated_im(fcor_img,fcor_img,x_ctd,y_cord,30,fctd)
+    except Exception as e:
+        if len(fctd)==2:
+            l = 1
+        else:
+            l = int(len(fctd)/2)
+        fsag_img = fimg_data[:,:,int(fctd[l][3])]
+        fcor_img = fimg_data[:,int(fctd[l][2]),:]
+        new_fctd = fctd
+        new_fcent_cor = fctd
+
+    bdrr_iso = deepcopy(bimg_data)
+    bdrr_iso[bmsk_data==0] = np.nan
+    drr_b = np.nansum(bdrr_iso,2)
+        
+
+    fdrr_iso = deepcopy(fimg_data)
+    fdrr_iso[fmsk_data==0] = np.nan
+    drr_f = np.nansum(fdrr_iso,2)
+
+    b_bmd_json = msk_pth.replace('_seg-vert_msk.nii.gz', '_cal-async_eval.json')
+    with open(b_bmd_json) as json_data:
+        bjs = json.load(json_data)
+        json_data.close()
+    bbmd = 'Nan'
+    for dic in bjs[1]:
+        if 'vBMD_trab-eroded_median_22' in dic.keys():
+            bbmd = str(dic['vBMD_trab-eroded_median_22' ])
+
+    fig, axs, size = create_figure_1(dpi,drr_b,None)
     fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
-    axs.imshow(bsag_img_fx, cmap=plt.cm.gray, norm=wdw_sbone)
-    plot_sag_centroids(axs, ctd_iso, zms)
+    axs.imshow(drr_b, cmap=plt.cm.gray, interpolation='lanczos')
+    
+
+    plot_sag_centroids(axs, bctd, zms)
+    plot_bmd_label(axs,bctd,zms, bbmd)
     buffer_ = BytesIO()
     plt.savefig(buffer_, format = "png")
     buffer_.seek(0)
     image = PIL.Image.open(buffer_)
-    bsag_img_fx = np.asarray(image)
+    b_sag_drr = np.asarray(image)
     buffer_.close()
     plt.close()
     
-    fig, axs,_ = create_figure_1(120,bcor_img_fx,size)
+    
+    f_bmd_json = fmsk_pth.replace('_seg-vert_msk.nii.gz', '_cal-async_eval.json')
+    with open(f_bmd_json) as json_data:
+        fjs = json.load(json_data)
+        json_data.close()
+    fbmd = 'Nan'
+    for dic in fjs[1]:
+        if 'vBMD_trab-eroded_median_22' in dic.keys():
+            fbmd = str(dic['vBMD_trab-eroded_median_22' ])
+    
+    fig, axs,_ = create_figure_1(dpi,drr_f,size)
     fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
-    axs.imshow(bcor_img_fx, cmap=plt.cm.gray, norm=wdw_sbone)
-    plot_cor_centroids(axs, ctd_iso, zms)
+    axs.imshow(drr_f, cmap=plt.cm.gray, interpolation='lanczos')
+    plot_sag_centroids(axs, fctd, zms)
+    plot_bmd_label(axs,fctd,zms, fbmd)
     buffer_ = BytesIO()
     plt.savefig(buffer_, format = "png")
     buffer_.seek(0)
     image = PIL.Image.open(buffer_)
-    bcor_img_fx = np.asarray(image)
+    f_sag_drr = np.asarray(image)
     buffer_.close()
     plt.close()
-
-    return img_iso, ctd_iso, drr, bsag_img_fx, bcor_img_fx, zms, size
     
 
+    bsag_msk[bsag_msk>0] = 2
+    res_im[res_im>0] = 1
+    
+    
+    bsag_msk[res_im>0]  = np.nan
+    
+    bsag_msk[bsag_msk==0] = np.nan
+    res_im[res_im==0] = np.nan
+    bsag_msk[0,0] = 1
+    res_im[0,0] = 2
 
-def make_isotropic2d(arr2d, zms2d, msk=False):
-    xs = [x for x in range(arr2d.shape[0])]
-    ys = [y for y in range(arr2d.shape[1])]
-    if msk:
-        interpolator = RegularGridInterpolator((xs, ys), arr2d, method='nearest')
-    else:
-        interpolator = RegularGridInterpolator((xs, ys), arr2d)
-    new_shp = tuple(np.rint(np.multiply(arr2d.shape, zms2d)).astype(int))
-    x_mm = np.linspace(0, arr2d.shape[0]-1, num=new_shp[0])
-    y_mm = np.linspace(0, arr2d.shape[1]-1, num=new_shp[1])
-    xx, yy = np.meshgrid(x_mm, y_mm)
-    pts = np.vstack([xx.ravel(), yy.ravel()]).T
-    img = np.reshape(interpolator(pts), new_shp, order='F')
-    return img
+    
+        
+    fig, axs, size = create_figure_1(dpi,bsag_img,size)
+    fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
+    axs.imshow(bsag_img, cmap=plt.cm.gray, norm=wdw_sbone)
+    axs.imshow(bsag_msk, cmap=cm_sr, alpha=0.7)
+    axs.imshow(res_im, cmap=cm_sr, alpha=0.2)
+    
+    
+    plot_sag_centroids(axs, new_bctd, zms)
+    if not b_labels.empty: 
+        plot_sag_labels(axs, new_bctd, zms, b_labels, size=2, text=True)
+    
+    buffer_ = BytesIO()
+    plt.savefig(buffer_, format = "png")
+    buffer_.seek(0)
+    image = PIL.Image.open(buffer_)
+    bsag_img_ = np.asarray(image)
+    buffer_.close()
+    plt.close()
+    
+    fig, axs,fsize = create_figure_1(dpi,fsag_img,size)
+    fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
+    axs.imshow(fsag_img, cmap=plt.cm.gray, norm=wdw_sbone)
+    plot_sag_centroids(axs, new_fctd, fzms)
+    if not f_labels.empty: 
+        plot_sag_labels(axs, new_fctd, zms, f_labels, size=2, text=True)
+    buffer_ = BytesIO()
+    plt.savefig(buffer_, format = "png")
+    buffer_.seek(0)
+    image = PIL.Image.open(buffer_)
+    fsag_img_ = np.asarray(image)
 
+    buffer_.close()
+    plt.close()
+    ###################################
+    
+    bcor_msk[bcor_msk>0] = 2
+    res_cor[res_cor>0] = 1
+    
+    
+    bcor_msk[res_cor>0]  = np.nan
+    
+    bcor_msk[bcor_msk==0] = np.nan
+    res_cor[res_cor==0] = np.nan
+    bcor_msk[0,0] = 1
+    res_cor[0,0] = 2
+    
+    
+    fig, axs,fsize = create_figure_1(dpi,bcor_img,size)
+    fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
+    axs.imshow(bcor_img, cmap=plt.cm.gray, norm=wdw_sbone)
+    axs.imshow(bcor_msk, cmap=cm_sr, alpha=0.7)
+    axs.imshow(res_cor, cmap=cm_sr, alpha=0.2)
+    plot_cor_centroids(axs, new_bcent_cor, fzms)
+
+    buffer_ = BytesIO()
+    plt.savefig(buffer_, format = "png")
+    buffer_.seek(0)
+    image = PIL.Image.open(buffer_)
+    bcor_img_ = np.asarray(image)
+
+    buffer_.close()
+    plt.close()
+    
+    
+    fig, axs,fsize = create_figure_1(dpi,fcor_img,size)
+    fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
+    axs.imshow(fcor_img, cmap=plt.cm.gray, norm=wdw_sbone)
+    plot_cor_centroids(axs, new_fcent_cor, fzms)
+
+    buffer_ = BytesIO()
+    plt.savefig(buffer_, format = "png")
+    buffer_.seek(0)
+    image = PIL.Image.open(buffer_)
+    fcor_img_ = np.asarray(image)
+
+    buffer_.close()
+    plt.close()
+    
+
+    
+    return bimg, b_sag_drr, f_sag_drr, bctd, fimg, bsag_img_,fsag_img_, fctd, bcor_img_, fcor_img_,bzms,fzms, size, fsize
+
+def plot_sag_labels(axs, ctd, zms, ctd_labels, size=2, text=True):
+    # requires v_dict = dictionary of mask labels and a pd dataframe with labels "ctd_labels"
+    for v in ctd[1:]:
+        if ctd_labels[v_dict[v[0]]].values > 0:            # handle non-existing labels
+            vert_label = np.int(ctd_labels[v_dict[v[0]]])
+        else:
+            vert_label = 0 
+        if vert_label > 0:            
+            axs.add_patch(Circle((v[2]*zms[1], v[1]*zms[0]), size, color=colors_labels[vert_label]))
+            if text:
+                axs.text(v[2]*zms[1]- 11, v[1]*zms[0]+2, vert_label, fontdict={'color': cm_labl(vert_label), 'weight': 'bold'})
 
 def sag_cor_curveprojection(ctd_list, arr):
     # Sagittal and coronal projections of a curved plane defined by centroids
@@ -281,23 +619,95 @@ def load_centroids(ctd_path):
             ctd_list.append([d['label'], d['X'], d['Y'], d['Z']]) 
     return ctd_list
 
+def create_interpolated_im(img,msk,x_ctd,y_cord,inter,ctd):
+    #interpolates a given 2D image 'img' along with its mask 'msk' to an interpolation interval 'inter' using the distance dictionart l_dict  
+    
+    #create a dictionary of euclidean distances between each slice
+    xcords = range(x_ctd[0],x_ctd[-1],1)
+    distances = {}
+    co = 0
+    cx = 0
+    cy = 0
+    for x,y in zip(xcords,y_cord):
+
+        if co>0:
+            d =math.sqrt((x -cx)**2 + (y -cy)**2)
+            distances[x] = d
+        else:
+            distances[x] = 1
+        co+=1
+        cx = x
+        cy = y
+    interp_ctd = []
+
+    ks = list(sorted(distances.keys()))
+    #split the spine into chunks depending on the value of inter
+    chunks = [ks[x:x+inter] for x in range(0, len(ks), inter)]
+
+    n_d = {}
+    n_d1 = {}
+    for iii,ch in enumerate(chunks):
+        
+        n_d[ch[0]+inter] = sum([distances[y] for y in ch])
+    #calculate new centroids
+
+    new_cent = deepcopy(ctd)
+
+    for cent in new_cent:
+        if type(cent) is list:
+            su =sum([distances[i]-1 for i in distances if i<cent[1]])
+            cent[1]+= su
+    l_dict = n_d
+
+    x = l_dict.values()
+    h,w = img.shape
+    
+    first_o=0
+    ixx_img =None
+    ixx_msk = None
+    for k in sorted(l_dict.keys()):
+        new_slices = 0    
+        val = l_dict[k]
+
+        if val >= inter:
+            new_slices = int(round(val-inter))
+        if new_slices > 0:
+            hh = k-first_o+new_slices
+
+            nimg = resize(img[first_o:k,:],(hh,w),order = 3,preserve_range=True, mode='constant',anti_aliasing=False)
+            nmsk = resize(msk[first_o:k,:],(hh,w),order = 0,preserve_range=True, mode='constant',anti_aliasing=False)
+                        
+            if ixx_img is None:
+                ixx_img = nimg     
+                ixx_msk= nmsk
+            else:
+                ixx_img = np.concatenate((ixx_img,nimg),axis = 0)
+                ixx_msk = np.concatenate((ixx_msk,nmsk),axis = 0)
+            first_o = k
+        else:
+            if ixx_img is None:
+                ixx_img = img[first_o:k,:]  
+                ixx_msk= msk[first_o:k,:]
+            else:    
+                ixx_img = np.concatenate((ixx_img,img[first_o:k,:]),axis = 0)
+                ixx_msk = np.concatenate((ixx_msk,msk[first_o:k,:]),axis = 0)
+            first_o = k
+    ixx_img = np.concatenate((ixx_img,img[k:,:]),axis=0)
+    ixx_msk=np.concatenate((ixx_msk,msk[k:,:]),axis=0)
+    return ixx_img,ixx_msk,new_cent
 
 
-def create_figure(dpi, *planes):
-    fig_h = round(2 * planes[0].shape[0] / dpi, 2)
-    plane_w = [p.shape[1] for p in planes]
-    w = sum(plane_w)
-    fig_w = round(2 * w / dpi, 2)
-    x_pos = [0]
-    for x in plane_w[:-1]:
-        x_pos.append(x_pos[-1] + x)
-    fig, axs = plt.subplots(1, len(planes), figsize=(fig_w, fig_h))
-    for a in axs:
-        a.axis('off')
-        idx = axs.tolist().index(a)
-        a.set_position([x_pos[idx]/w, 0, plane_w[idx]/w, 1])
-    return fig, axs
 
+def create_figure_1(dpi, planes, size=None):
+    fig_h = round(2 * planes.shape[0] / dpi, 2)
+    fig_w = round(2 * planes.shape[1] / dpi, 2)
+    if size:
+        s = size
+    else:
+        s=(fig_w, fig_h)
+    fig, axs = plt.subplots(1, 1,figsize=s )
+    axs.axis('off')
+    return fig, axs, (fig_w,fig_h)
 
 def plot_sag_centroids(axs, ctd, zms):
     # requires v_dict = dictionary of mask labels
@@ -350,6 +760,7 @@ def cor_i(x,cor):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
     fig = plt.figure(figsize=(3, 12))
+    fig.patch.set_facecolor('black')
     ax_neu = fig.add_subplot(1,1,1) 
     plt.axis('off')
 
@@ -362,7 +773,6 @@ def cor_f(slc,img,zms,size):
         warnings.simplefilter("ignore")
         img_median = img.get_fdata()[:,slc,:]
         
-    img_median = make_isotropic2d(img_median,(zms[0], zms[2]))
         
     fig, axs,_ = create_figure_1(120,img_median,size)
     fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
@@ -391,99 +801,111 @@ def sag_f(slc,img,zms):
     ax_neu = fig.add_subplot(1,1,1) 
     plt.axis('off')
 
-    ax_neu.imshow(make_isotropic2d(img_median,(zms[0], zms[1])), cmap="gray", norm=wdw_sbone)
+    ax_neu.imshow(img_median, cmap="gray", norm=wdw_sbone)
     fig.canvas.draw()
 #     display(fig)
 
-def ax(slc):
-    
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore")
-        img_median = img.get_fdata()[slc,:,:]
-    fig = plt.figure(figsize=(6, 5))
-    ax_neu = fig.add_subplot(1,1,1) 
-    plt.axis('off')
 
-    ax_neu.imshow(img_median, cmap="gray")
-    fig.canvas.draw()
-    
-    
 v_dict = {
     1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
     8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
     15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
     21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
 }
-
-def get_paths(pth, ex, rater,chunks=None):
-    
+def get_raw_ct_paths(directory):
     im_paths = []
-    study_dir = Path(pth)
-    if study_dir.joinpath('rawdata').is_dir():
-        subject_dirs = sorted(study_dir.joinpath('rawdata').iterdir())
-    else:
-        subject_dirs = sorted(study_dir.iterdir())
-    #select only specific studies or skip specific studies
-    #if not ("dataset-CSI" in str(study_dir)) or ("dataset-csi" in str(study_dir)):
-    #    continue
-    file_list=[]
-
-    all_dicts = []
-    if chunks is not None:
-        subject_dirs = subject_dirs[(chunks*20):((chunks*20)+20)]
-    for subject_dir in subject_dirs:                 # iterate over subjectdirs
-        if not subject_dir.is_dir() or subject_dir.name[0] == '.':
-            continue
-        files = list(subject_dir.rglob('*_ct.nii.gz'))      # rglob will iterate over files indepentent from the presence of sessions
-        if len(files) > 0:  # skip root_dirs and empty dirs
-            files.sort()
-            
-        for f_pth in files:
- 
-            if "rawdata" in  str(f_pth) and not str(Path(f_pth).name).startswith('._'):
-                drv = Path(str(f_pth).replace("rawdata", "derivatives"))
-                msk_pth= drv.with_name(drv.name.replace("_ct.nii.gz", "_seg-vert_msk.nii.gz"))
-                ctd_pth = drv.with_name(drv.name.replace("_ct.nii.gz", "_seg-subreg_ctd.json"))
-                res_path = drv.with_name(drv.name.replace("_ct.nii.gz", '_fx-{}_res.json'.format(rater)))
-                if ex:
-                    if res_path.is_file():
-                        continue                
-                if not msk_pth.is_file() or not ctd_pth.is_file():
-                    continue
-                else:
-                    im_paths.append([str(f_pth), str(msk_pth),str(ctd_pth)])
-
-                
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith("_ct.nii.gz"):
+                im_paths.append(os.path.join(root, file))
     return im_paths
 
-
-def save_csv(pth, rater):
-    fx_path = Path(pth).joinpath('FX-Grades_{}.csv'.format(rater))
-    ivd_path = Path(pth).joinpath('IVD-Grades_{}.csv'.format(rater))
+def get_derivative_path_from_raw_ct(img_path):
+    drv = str(img_path).replace("rawdata", "derivatives")
     
-    study_dir = Path(pth)
-    if study_dir.joinpath('derivatives').is_dir():
-        subject_dirs = sorted(study_dir.joinpath('derivatives').iterdir())
+    msk_path = drv.replace('_ct.nii.gz', '_seg-vert_msk.nii.gz')
+    sr_path = drv.replace('_ct.nii.gz', '_seg-subreg_msk.nii.gz')
+    ctd_path = sr_path.replace('_msk.nii.gz', '_ctd.json')
+    return msk_path, sr_path, ctd_path
+
+def get_baseline_fu_ses(unique_sessions):
+    ses1 = int(unique_sessions[0][4:])
+    ses2 = int(unique_sessions[1][4:])
+
+    if ses1 > ses2:
+        baseline_ses = unique_sessions[1]
+        followup_ses = unique_sessions[0]
     else:
-        subject_dirs = sorted(study_dir.iterdir())
+        baseline_ses = unique_sessions[0]
+        followup_ses = unique_sessions[1]
+    return baseline_ses, followup_ses  
+
+def get_study_dict(fold, baseline_ses, followup_ses):
+
+    baseline_dir = os.path.join(fold, baseline_ses)
+    followup_dir = os.path.join(fold, followup_ses)
+
+    baseline_ims = [os.path.join(baseline_dir, x) for x in os.listdir(baseline_dir) if x.endswith('_ct.nii.gz')]
+    followup_ims = [os.path.join(followup_dir, x)  for x in os.listdir(followup_dir) if x.endswith('_ct.nii.gz')]
+
+    study_dict = {'baselines': baseline_ims, 'followups': followup_ims}
+    return study_dict
+
+
+def get_sub_nifti_path(baseline_path, followup_path):
+    sub_dir = os.path.join(os.path.dirname(os.path.dirname(baseline_path)).replace('rawdata','derivatives'), 'subtraction')
+    baseline_ses = os.path.basename(os.path.dirname(baseline_path))
+    followup_ses = os.path.basename(os.path.dirname(followup_path))
+    spl_b, spl_f = '', ''
+    if 'split' in baseline_path:
+        spl_b = '_split-{}'.format(baseline_path.split('split-')[1].split('_')[0])
+    if 'split' in followup_path:
+        spl_f = '_split-{}'.format(followup_path.split('split-')[1].split('_')[0])
+
+    sub_name = os.path.basename(baseline_path).split('_')[0] + '_sesb-{}{}'.format(baseline_ses.split('-')[1],spl_b) + '_sesf-{}{}'.format(followup_ses.split('-')[1],spl_f) + '_msk.nii.gz'
+    sub_path = os.path.join(sub_dir, sub_name)
     
+    return sub_path
 
-    all_fx_dicts = []
-    all_ivd_dicts = []
-    files_fx = list(study_dir.rglob('*_fx-{}_res.json'.format(rater)))      
-    files_ivd = list(study_dir.rglob('*_ivd-{}_res.json'.format(rater)))   
+def create_evaluation_path(results_folder, sub_path, rater):
+    return os.path.join(results_folder,os.path.basename(sub_path).replace('_ref.nii.gz', '_rater-{}_eval.json'.format(rater)))
 
-    for fx_pth in files_fx:
-        all_fx_dicts.append(load_json(fx_pth))         
-    for ivd_pth in files_ivd:
-        all_ivd_dicts.append(load_json(ivd_pth)) 
-    data_frame_fx  = pd.DataFrame(all_fx_dicts)
-    data_frame_fx.to_csv(fx_path)
-    print('# Fracture csv saved : ',fx_path)
-    data_frame_ivd  = pd.DataFrame(all_ivd_dicts)
-    data_frame_ivd.to_csv(ivd_path)   
-    print('# IVD csv saved : ',ivd_path)
-
+def get_paths_followup(dataset_folder, ex, rater,chunks=None, results_folder='./results'):
+    main_fold = os.path.join(dataset_folder, 'rawdata')
+    folders = [os.path.join(main_fold,x) for x in os.listdir(main_fold) if 'sub-ctfu' in x]
+    folders.sort()
+    if chunks:
+        pointer1 = chunks * 20
+        pointer2 = pointer1 + 20
+    else:
+        pointer1 = 0
+        pointer2 = len(folders)
+    paths = []
+    for fold in folders[pointer1:pointer2]:
+        unique_sessions = [x for x in os.listdir(fold) if 'ses' in x]
+        if len(unique_sessions) != 2:
+            continue
+        baseline_ses, followup_ses = get_baseline_fu_ses(unique_sessions)
+        
+        study_dict = get_study_dict(fold, baseline_ses, followup_ses)
+        
+        for baseline_path in study_dict['baselines']:
+            for followup_path in study_dict['followups']:
+                sub_path = get_sub_nifti_path(baseline_path, followup_path)
+                eval_path = create_evaluation_path(results_folder, sub_path, rater)
+                if ex:
+                    if os.path.isfile(eval_path):
+                        continue
+                
+                b_msk_path, b_sr_path, b_ctd_path = get_derivative_path_from_raw_ct(baseline_path)
+                f_msk_path, f_sr_path, f_ctd_path = get_derivative_path_from_raw_ct(followup_path)
+                
+                
+                if os.path.isfile(sub_path):
+                    ps = [baseline_path, b_msk_path,b_sr_path,b_ctd_path,followup_path,f_msk_path,f_sr_path,f_ctd_path,sub_path]
+                    paths.append(ps)
+    return paths
+                
 def load_json(json_path):
     name = Path(json_path).name
     name = str(name).split('_')[0]
@@ -493,54 +915,19 @@ def load_json(json_path):
         json_data.close()
     return js
 
+def get_results_fu(path,vert):
+    try:
+        entry = get_csv_entry(path)
+        labels = pd.read_csv('./labels.csv')
 
-def get_result_jan(path,vert):
-    try:
-        grade_table = pd.read_excel(str(Path.cwd().joinpath('fx_jsk_verse.xlsx')))
-        ID = int(str(Path(path).name).split('_')[0][-3:])
-        gr = grade_table[vert][(grade_table["ID"] == int(ID))]
-        if not gr.empty:
-            if not math.isnan(gr):
-                gr = str(int(gr))
-            else:
-                gr = ''
+        label  = labels[vert][labels['ID']==entry]
+
+        if label.values > 0:            # handle non-existing labels
+            vert_label = str(int(label))
         else:
-            gr = ''
-        return gr
+            vert_label = "" 
     except Exception as e:
-        return ''
-    
-def get_result_thomas(path,vert):
-    try:
-        grade_table = pd.read_excel(str(Path.cwd().joinpath('fx_thomas_verse.xlsx')))
-        ID = int(str(Path(path).name).split('_')[0][-3:])
-        gr = grade_table[vert][(grade_table["ID"] == int(ID))]
-        if not gr.empty:
-            if not math.isnan(gr):
-                gr = str(int(gr))
-            else:
-                gr = ''
-        else:
-            gr = ''
-        return gr
-    except Exception as e:
-        return ''
-    
-def get_result_max(path,vert):
-    try:
-        if 'C' in vert:
-            return ''
-        grade_table = pd.read_excel(str(Path.cwd().joinpath('ryai190138_appendixe1.xlsx')),sheet_name= 'VerSe_dataset')
-        ID = int(str(Path(path).name).split('_')[0][-3:])
-        vert = vert + '_fx-s'
-        gr = grade_table[vert][(grade_table["verse_ID"] == ID)]
-        if not gr.empty:
-            if not math.isnan(gr):
-                gr = str(int(gr))
-            else:
-                gr = ''
-        else:
-            gr = ''
-        return gr
-    except Exception as e:
-        return ''
+        print('error ', str(e))
+        vert_label = ""
+    return vert_label
+

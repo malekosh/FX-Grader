@@ -1,0 +1,180 @@
+[
+    {
+        "cal_type": "Async. Calibration for PHILIPS scanner, model Brilliance 64 at 120 kVp",
+        "ce_type": "ce-no"
+    },
+    [
+        {
+            "vBMD_trab-eroded_mean_2": 240.3,
+            "vBMD_trab-eroded_median_2": 235.1,
+            "vBMD_trab-eroded_sd_2": 92.4,
+            "vBMD_trab_mean_2": 241.3,
+            "vBMD_trab_median_2": 235.1,
+            "vBMD_trab_sd_2": 117.2,
+            "vBMD_body_mean_2": 364.8,
+            "vBMD_body_sd_2": 232.6,
+            "vBMD_body_cont_2": 2.63,
+            "HU_trab-eroded_mean_2": 329.2,
+            "HU_trab-eroded_median_2": 322.0,
+            "HU_trab-eroded_sd_2": 126.5,
+            "HU_trab_mean_2": 330.5,
+            "HU_trab_median_2": 322.0,
+            "HU_trab_sd_2": 160.5,
+            "HU_body_mean_2": 499.7,
+            "HU_body_sd_2": 318.6,
+            "HU_body_cont_2": 3.6
+        },
+        {
+            "vBMD_trab-eroded_mean_3": 246.8,
+            "vBMD_trab-eroded_median_3": 248.2,
+            "vBMD_trab-eroded_sd_3": 76.4,
+            "vBMD_trab_mean_3": 231.9,
+            "vBMD_trab_median_3": 218.3,
+            "vBMD_trab_sd_3": 121.3,
+            "vBMD_body_mean_3": 308.5,
+            "vBMD_body_sd_3": 177.8,
+            "vBMD_body_cont_3": 1.33,
+            "HU_trab-eroded_mean_3": 338.1,
+            "HU_trab-eroded_median_3": 340.0,
+            "HU_trab-eroded_sd_3": 104.6,
+            "HU_trab_mean_3": 317.7,
+            "HU_trab_median_3": 299.0,
+            "HU_trab_sd_3": 166.2,
+            "HU_body_mean_3": 422.6,
+            "HU_body_sd_3": 243.5,
+            "HU_body_cont_3": 1.82
+        },
+        {
+            "vBMD_trab-eroded_mean_4": 180.4,
+            "vBMD_trab-eroded_median_4": 184.0,
+            "vBMD_trab-eroded_sd_4": 80.4,
+            "vBMD_trab_mean_4": 222.6,
+            "vBMD_trab_median_4": 211.0,
+            "vBMD_trab_sd_4": 103.9,
+            "vBMD_body_mean_4": 300.5,
+            "vBMD_body_sd_4": 185.3,
+            "vBMD_body_cont_4": 1.43,
+            "HU_trab-eroded_mean_4": 247.1,
+            "HU_trab-eroded_median_4": 252.0,
+            "HU_trab-eroded_sd_4": 110.1,
+            "HU_trab_mean_4": 304.9,
+            "HU_trab_median_4": 289.0,
+            "HU_trab_sd_4": 142.3,
+            "HU_body_mean_4": 411.6,
+            "HU_body_sd_4": 253.9,
+            "HU_body_cont_4": 1.95
+        },
+        {
+            "vBMD_trab-eroded_mean_5": 179.7,
+            "vBMD_trab-eroded_median_5": 181.4,
+            "vBMD_trab-eroded_sd_5": 77.7,
+            "vBMD_trab_mean_5": 193.7,
+            "vBMD_trab_median_5": 187.6,
+            "vBMD_trab_sd_5": 87.4,
+            "vBMD_body_mean_5": 292.8,
+            "vBMD_body_sd_5": 170.5,
+            "vBMD_body_cont_5": 1.57,
+            "HU_trab-eroded_mean_5": 246.2,
+            "HU_trab-eroded_median_5": 248.5,
+            "HU_trab-eroded_sd_5": 106.5,
+            "HU_trab_mean_5": 265.4,
+            "HU_trab_median_5": 257.0,
+            "HU_trab_sd_5": 119.7,
+            "HU_body_mean_5": 401.1,
+            "HU_body_sd_5": 233.5,
+            "HU_body_cont_5": 2.16
+        },
+        {
+            "vBMD_trab-eroded_mean_6": 160.5,
+            "vBMD_trab-eroded_median_6": 157.7,
+            "vBMD_trab-eroded_sd_6": 76.3,
+            "vBMD_trab_mean_6": 179.3,
+            "vBMD_trab_median_6": 173.0,
+            "vBMD_trab_sd_6": 92.0,
+            "vBMD_body_mean_6": 300.1,
+            "vBMD_body_sd_6": 180.2,
+            "vBMD_body_cont_6": 2.2,
+            "HU_trab-eroded_mean_6": 219.8,
+            "HU_trab-eroded_median_6": 216.0,
+            "HU_trab-eroded_sd_6": 104.6,
+            "HU_trab_mean_6": 245.6,
+            "HU_trab_median_6": 237.0,
+            "HU_trab_sd_6": 126.1,
+            "HU_body_mean_6": 411.1,
+            "HU_body_sd_6": 246.8,
+            "HU_body_cont_6": 3.01
+        },
+        {
+            "vBMD_trab-eroded_mean_7": 166.1,
+            "vBMD_trab-eroded_median_7": 167.2,
+            "vBMD_trab-eroded_sd_7": 70.3,
+            "vBMD_trab_mean_7": 168.0,
+            "vBMD_trab_median_7": 165.7,
+            "vBMD_trab_sd_7": 73.1,
+            "vBMD_body_mean_7": 247.7,
+            "vBMD_body_sd_7": 144.0,
+            "vBMD_body_cont_7": 1.83,
+            "HU_trab-eroded_mean_7": 227.5,
+            "HU_trab-eroded_median_7": 229.0,
+            "HU_trab-eroded_sd_7": 96.4,
+            "HU_trab_mean_7": 230.1,
+            "HU_trab_median_7": 227.0,
+            "HU_trab_sd_7": 100.2,
+            "HU_body_mean_7": 339.3,
+            "HU_body_sd_7": 197.3,
+            "HU_body_cont_7": 2.5
+        },
+        {
+            "vBMD_trab-eroded_mean_8": 137.5,
+            "vBMD_trab-eroded_median_8": 135.0,
+            "vBMD_trab-eroded_sd_8": 64.6,
+            "vBMD_trab_mean_8": 133.9,
+            "vBMD_trab_median_8": 130.7,
+            "vBMD_trab_sd_8": 67.0,
+            "vBMD_body_mean_8": 181.9,
+            "vBMD_body_sd_8": 107.1,
+            "vBMD_body_cont_8": 1.62,
+            "HU_trab-eroded_mean_8": 188.3,
+            "HU_trab-eroded_median_8": 185.0,
+            "HU_trab-eroded_sd_8": 88.5,
+            "HU_trab_mean_8": 183.4,
+            "HU_trab_median_8": 179.0,
+            "HU_trab_sd_8": 91.8,
+            "HU_body_mean_8": 249.2,
+            "HU_body_sd_8": 146.7,
+            "HU_body_cont_8": 2.22
+        },
+        {
+            "PHT_mean_1": 312.6,
+            "PHT_std_1": 171.8
+        },
+        {
+            "PHT_mean_2": 347.7,
+            "PHT_std_2": 143.8
+        },
+        {
+            "PHT_mean_3": 297.1,
+            "PHT_std_3": 157.5
+        },
+        {
+            "PHT_mean_4": 294.4,
+            "PHT_std_4": 134.1
+        },
+        {
+            "PHT_mean_5": 282.5,
+            "PHT_std_5": 98.0
+        },
+        {
+            "PHT_mean_6": 240.1,
+            "PHT_std_6": 122.1
+        },
+        {
+            "PHT_mean_7": 244.7,
+            "PHT_std_7": 105.1
+        },
+        {
+            "PHT_mean_8": 178.5,
+            "PHT_std_8": 91.3
+        }
+    ]
+]
