@@ -175,16 +175,16 @@ def get_paddings(msk1, msk2, ctd1, ctd2):
         rat_pad_1_2 = len([x for x in ctd_dict2.keys() if x>max(list(ctd_dict1.keys()))])
 
         to_pad_tot = msk2.shape[1] - msk1.shape[1]
-        rat_pad_1_1 = (rat_pad_1_1/(rat_pad_1_1 + rat_pad_1_2)) * to_pad_tot
-        rat_pad_1_2 = (rat_pad_1_2/(rat_pad_1_1 + rat_pad_1_2)) * to_pad_tot
+        rat_pad_1_1 = (rat_pad_1_1/(rat_pad_1_1 + rat_pad_1_2+1e-7)) * to_pad_tot
+        rat_pad_1_2 = (rat_pad_1_2/(rat_pad_1_1 + rat_pad_1_2+1e-7)) * to_pad_tot
 
     if msk1.shape[1] > msk2.shape[1] > 0:
         to_pad_tot = msk1.shape[1] - msk2.shape[1]
         rat_pad_2_1 = len([x for x in ctd_dict1.keys() if x<min(list(ctd_dict2.keys()))])
         rat_pad_2_2 = len([x for x in ctd_dict1.keys() if x>max(list(ctd_dict2.keys()))])
 
-        rat_pad_2_1 = (rat_pad_2_1/(rat_pad_2_1 + rat_pad_2_2)) * to_pad_tot
-        rat_pad_2_2 = (rat_pad_2_2/(rat_pad_2_1 + rat_pad_2_2)) * to_pad_tot
+        rat_pad_2_1 = (rat_pad_2_1/(rat_pad_2_1 + rat_pad_2_2+1e-7)) * to_pad_tot
+        rat_pad_2_2 = (rat_pad_2_2/(rat_pad_2_1 + rat_pad_2_2+1e-7)) * to_pad_tot
 
 
     if msk2.shape[0] > msk1.shape[0]:
@@ -205,7 +205,7 @@ def get_paddings(msk1, msk2, ctd1, ctd2):
     else:
         to_pad_io_1,  to_pad_io_2= 0, 0
         
-    return rat_pad_1_1, rat_pad_1_2, rat_pad_2_1, rat_pad_2_2, to_pad_rl_1, to_pad_rl_2, to_pad_io_1,  to_pad_io_2
+    return int(rat_pad_1_1), int(rat_pad_1_2), int(rat_pad_2_1), int(rat_pad_2_2), int(to_pad_rl_1), int(to_pad_rl_2), int(to_pad_io_1),  int(to_pad_io_2)
 
 def pad_arr(arr1, arr2, pads, msk=False):
     if not msk:
@@ -284,12 +284,14 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
     bctd = load_centroids(ctd_pth)
     sub = nib.load(sub_path)
     sr = nib.load(sr_pth)
+    b_ex_cents = [x[0] for x in bctd[1:] if isinstance(x[0], int)]
     
     fimg = nib.load(fimg_pth)
     fmsk = nib.load(fmsk_pth)
     fctd = load_centroids(fctd_pth)
-
+    f_ex_cents = [x[0] for x in fctd[1:] if isinstance(x[0], int)]
     
+    to_remove_bs = [x for x in b_ex_cents if x not in f_ex_cents]
     
     
     bimg, bmsk,sr, fimg, fmsk, sub, bctd, fctd = pad_niftis(bimg, bmsk,sr, fimg, fmsk, sub, bctd, fctd)
@@ -323,6 +325,7 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
     res_data = np.asanyarray(sub.dataobj, dtype=sub.dataobj.dtype)
 
     
+        
     try:
         bsag_img, bcor_img, _, _, _ = sag_cor_curveprojection(bctd, bimg_data)
         bsag_msk, bcor_msk, y_cord, z_cord, x_ctd = sag_cor_curveprojection(bctd, bmsk_data)
@@ -362,7 +365,7 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
         fcor_img = fimg_data[:,int(fctd[l][2]),:]
         new_fctd = fctd
         new_fcent_cor = fctd
-
+    
     bdrr_iso = deepcopy(bimg_data)
     bdrr_iso[bmsk_data==0] = np.nan
     drr_b = np.nansum(bdrr_iso,2)
@@ -371,6 +374,10 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
     fdrr_iso = deepcopy(fimg_data)
     fdrr_iso[fmsk_data==0] = np.nan
     drr_f = np.nansum(fdrr_iso,2)
+    
+    for x in to_remove_bs:
+        bsag_msk[bsag_msk==x] = 0
+        bcor_msk[bcor_msk==x] = 0
 
     b_bmd_json = msk_pth.replace('_seg-vert_msk.nii.gz', '_cal-async_eval.json')
     with open(b_bmd_json) as json_data:
@@ -423,13 +430,14 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
     bsag_msk[bsag_msk>0] = 2
     res_im[res_im>0] = 1
     
-    
+    bsag_msk
     bsag_msk[res_im>0]  = np.nan
     
     bsag_msk[bsag_msk==0] = np.nan
     res_im[res_im==0] = np.nan
     bsag_msk[0,0] = 1
     res_im[0,0] = 2
+    
 
     
         
@@ -874,7 +882,7 @@ def get_paths_followup(dataset_folder, ex, rater,chunks=None, results_folder='./
     main_fold = os.path.join(dataset_folder, 'rawdata')
     folders = [os.path.join(main_fold,x) for x in os.listdir(main_fold) if 'sub-ctfu' in x]
     folders.sort()
-    if chunks:
+    if chunks is not None:
         pointer1 = chunks * 20
         pointer2 = pointer1 + 20
     else:
