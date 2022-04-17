@@ -1,5 +1,8 @@
 # FX-Grader
 
+## Dataset
+I created a resampled version of the dataset to avoid long processing times and this data can be found in `/Spine_data/Data_processed/ASL_ISO/dataset-s-ctfu` I recomment to download this to your local machine to improve data loading efficiency and avoid permission errors in some setups.  
+
 ## Installation instructions
 
 to run this project, you would need to download and install anaconda / miniconda
