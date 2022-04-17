@@ -33,21 +33,36 @@ source activate base
 ### Windows
 1) download and install anaconda: https://docs.anaconda.com/anaconda/install/windows/
 2) from your anaconda home, open CMD.exe Prompt as shown in the figure below:
+
 ![Screenshot](./readme_figs/powershell.png?raw=true "Optional Title")
 
 
-3) install ipywidgets using conda prompt:
+3) Navigate to the project directory by typing:
 ```
-conda install -c conda-forge ipywidgets
+cd path\to\project
 ```
-4) Launch jupyterlab from Anaconda Navigator.
-
-if you have installed the latest anacoda version this should be enough
-
-
-### Ipywidgets installation documentation
-If you still have trouble getting Ippwidgets running, please refer to the installation documentation: 
-
-https://ipywidgets.readthedocs.io/en/latest/user_install.html
+In the following figure I navigate to my project which can be found in the Documents folder, inside FX-Grader-Followup\FX-Grader-Followup:
+![Screenshot](./readme_figs/cd.png?raw=true "Optional Title")
 
 
+4) Install the project's evironment by typing (make sure you end up in the main directory of the repository)
+```
+conda env create -f environment.yml
+```
+This would take some time
+
+5) verify that the new environment has been installed and switch to that environment from the anaconda navigator. You should find an entry called grader_followup in the envronment tab. Once you see it, click on it to activate it. 
+
+![Screenshot](./readme_figs/activate.png?raw=true "Optional Title")
+
+6) Go back to the home tab of the anaconda navigator and start jupyter lab.
+![Screenshot](./readme_figs/jupyter.png?raw=true "Optional Title")
+
+7) Navigate to you project via the folder manager on the left side:
+![Screenshot](./readme_figs/navigate.png?raw=true "Optional Title")
+
+### General Notes
+From experience I found that the default white background of jupyter can become exhasting on the eyes, so I recommend to switch to the dark theme by pressing on the settings tab at the top left as follows:
+![Screenshot](./readme_figs/theme.png?raw=true "Optional Title")
+
+Finally, to ensure you make the most of your screen's width, I recommend to hide the folder navigator on the left side by pressing ctrl+b. The same command can be used to show it back again.
