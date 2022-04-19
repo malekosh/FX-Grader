@@ -17,7 +17,7 @@ make sure you perform these steps by running in zsh as a default shell: `chsh -s
 ```
 conda env create -f environment.yml
 ```
-4) activate the virtual environment by typing
+4) activate the virtual environment by typing (You need to perform this step everytime before opening a new session)
 ```
 conda activate grader_followup
 ```
