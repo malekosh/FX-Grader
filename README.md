@@ -12,12 +12,14 @@ to run this project, you would need to download and install anaconda / miniconda
 ### MAC OS / Linux
 1) download and install miniconda / anaconda:https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html 
 make sure you perform these steps by running in zsh as a default shell: `chsh -s /bin/zsh` and restart your terminal after the installation of miniconda.
-2) navigate to the main repository directory (where the .ipynb and .yml files are) via command line
-3) install conda environment by typing
+2) clone the repository using the comman `git clone https://github.com/malekosh/FX-Grader.git`
+if git is not installed, type in `brew install git`
+3) navigate to the main repository directory (where the .ipynb and .yml files are) via command line
+4) install conda environment by typing
 ```
 conda env create -f environment.yml
 ```
-4) activate the virtual environment by typing (You need to perform this step everytime before opening a new session)
+5) activate the virtual environment by typing (You need to perform this step everytime before opening a new session)
 ```
 conda activate grader_followup
 ```
@@ -25,8 +27,8 @@ or
 ```
 source activate grader_followup
 ```
-5) run jupyter-lab by typing `jupyter-lab` in the command line and make sure that you are in the project directory
-6) enjoy the supreme grading experience :D
+6) run jupyter-lab by typing `jupyter-lab` in the command line and make sure that you are in the project directory
+7) enjoy the supreme grading experience :D
 
 #### Notes
 if the command line does not recognize the conda command, then try activating the base environment at the beginning by typing
