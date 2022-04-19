@@ -10,7 +10,8 @@ to run this project, you would need to download and install anaconda / miniconda
 
 
 ### MAC OS / Linux
-1) download and install miniconda / anaconda:https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html
+1) download and install miniconda / anaconda:https://docs.conda.io/projects/conda/en/latest/user-guide/install/macos.html 
+make sure you perform these steps by running in zsh as a default shell: `chsh -s /bin/zsh` and restart your terminal after the installation of miniconda.
 2) navigate to the main repository directory (where the .ipynb and .yml files are) via command line
 3) install conda environment by typing
 ```

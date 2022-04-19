@@ -67,35 +67,36 @@ class viewer:
         id_bs = str(os.path.basename(b_img_path).replace('_ct.nii.gz', ''))
         id_fu = str(os.path.basename(f_img_path).replace('_ct.nii.gz', ''))
         if id_bs in self.database.ID.values:
-            self.bs_presence = "## Baseline already graded - press save to overwrite\n"
+            self.bs_presence = "## Baseline already graded - displaying your previous grades - press save to overwrite\n"
         else:
             self.bs_presence = ""
         
         if id_fu in self.database.ID.values:
-            self.fu_presence = "## Followup already graded - press save to overwrite"
+            self.fu_presence = "## Followup already graded - displaying your previous grades - press save to overwrite"
         else:
             self.fu_presence = ""
         self.initial_disp_txt = self.bs_presence + self.fu_presence
         
         if load_rater:
-            self.bs_gr = {self.v_dict[i]:get_results_fu(self.b_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
-            self.fu_gr  = {self.v_dict[i]:get_results_fu(self.f_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
-            
-        else:
             con_full_list = [self.v_dict[i] for i in self.full_ctd]
             if id_bs in self.database.ID.values:
                 dictt = self.database[self.database['ID']==id_bs].replace({np.nan:''}).to_dict(orient='records')
-                
                 self.bs_gr = {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list }
-                
             else:
-                self.bs_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
+                self.bs_gr = {self.v_dict[i]:get_results_fu(self.b_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
+            
             if id_fu in self.database.ID.values:
                 dictt = self.database[self.database['ID']==id_fu].replace({np.nan:''}).to_dict(orient='records')
                 
                 self.fu_gr =  {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list}
             else:
-                self.fu_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
+                self.fu_gr  = {self.v_dict[i]:get_results_fu(self.f_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
+            
+        else:
+
+            self.bs_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
+            
+            self.fu_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
                          
         
 
