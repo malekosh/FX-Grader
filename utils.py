@@ -263,21 +263,45 @@ def pad_niftis(bimg, bmsk,sr, fimg, fmsk, res, bctd, fctd):
     return bimg1, bmsk1,sr1, fimg1, fmsk1, res1, bctd1, fctd1 
 
 
+def get_labels_from_csv(dataframe, case_id, exclude_cervical=False):
+    verts = ['C2', 'C3', 'C4', 'C5', 'C6', 'C7', 
+                   'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
+                   'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'T13']
+    
+    all_entries = dataframe[dataframe['ID']==case_id].to_dict(orient='records')[0]
+    v_bmd = all_entries.get('vBMD_L3')
+    if np.isnan(v_bmd):
+        v_bmd = ''
+    
+        
+    return dataframe[dataframe['ID']==case_id], v_bmd
 
-def get_csv_entry(img_path):
-    csv_name = os.path.basename(img_path)
-    parts = csv_name.split('_')
-    name = parts[0] + '_' + parts[1]
-    return name
+def get_labels_from_imp(dataframe, img_path):
+    verts = ['C2', 'C3', 'C4', 'C5', 'C6', 'C7', 
+                   'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
+                   'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'T13']
+    
+    case_id =  get_csv_entry(img_path)
+    all_entries = dataframe[dataframe['ID']==case_id].to_dict(orient='records')[0]
+    
+    labels_dict = {x:y for x,y in all_entries.items() if 'def_' in x and not np.isnan(y)}
+
+        
+    return labels_dict
+
     
 
-def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, fctd_pth, sub_path, labels, dpi=120):
+def process_data_snp_sub(rater_dict, labels, dpi=120):
+    img_pth = rater_dict['b_img_pth']
+    fimg_pth = rater_dict['f_img_pth']
+    sub_path = rater_dict['sub_pth']
+    # img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, fctd_pth, sub_path, labels, dpi=120
+    msk_pth, sr_pth, ctd_pth = get_derivative_path_from_raw_ct(img_pth)
+    fmsk_pth, fsr_pth, fctd_pth = get_derivative_path_from_raw_ct(fimg_pth)
     
-    b_csv_entry = get_csv_entry(img_pth)
-    f_csv_entry = get_csv_entry(fimg_pth)
     
-    b_labels  = labels[labels['ID']==b_csv_entry]
-    f_labels  = labels[labels['ID']==f_csv_entry]
+    b_labels, bbmd = get_labels_from_csv(labels, get_csv_entry(img_pth))
+    f_labels, fbmd = get_labels_from_csv(labels, get_csv_entry(fimg_pth))
     
     bimg = nib.load(img_pth)
     bmsk = nib.load(msk_pth)
@@ -315,8 +339,9 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
     fzms = (1,1,1)
   
     
-    bimg_data = bimg.get_fdata()
+    bimg_data = np.asanyarray(bimg.dataobj, dtype=np.int16)
     bmsk_data = np.asanyarray(bmsk.dataobj, dtype=bmsk.dataobj.dtype)
+    
     fimg_data = fimg.get_fdata()
     fmsk_data = np.asanyarray(fmsk.dataobj, dtype=fmsk.dataobj.dtype)
     
@@ -366,12 +391,12 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
         new_fctd = fctd
         new_fcent_cor = fctd
     
-    bdrr_iso = deepcopy(bimg_data)
+    bdrr_iso = deepcopy(bimg_data.astype(float))
     bdrr_iso[bmsk_data==0] = np.nan
     drr_b = np.nansum(bdrr_iso,2)
         
 
-    fdrr_iso = deepcopy(fimg_data)
+    fdrr_iso = deepcopy(fimg_data.astype(float))
     fdrr_iso[fmsk_data==0] = np.nan
     drr_f = np.nansum(fdrr_iso,2)
     
@@ -379,14 +404,6 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
         bsag_msk[bsag_msk==x] = 0
         bcor_msk[bcor_msk==x] = 0
 
-    b_bmd_json = msk_pth.replace('_seg-vert_msk.nii.gz', '_cal-async_eval.json')
-    with open(b_bmd_json) as json_data:
-        bjs = json.load(json_data)
-        json_data.close()
-    bbmd = 'Nan'
-    for dic in bjs[1]:
-        if 'vBMD_trab-eroded_median_22' in dic.keys():
-            bbmd = str(dic['vBMD_trab-eroded_median_22' ])
 
     fig, axs, size = create_figure_1(dpi,drr_b,None)
     fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
@@ -404,14 +421,7 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
     plt.close()
     
     
-    f_bmd_json = fmsk_pth.replace('_seg-vert_msk.nii.gz', '_cal-async_eval.json')
-    with open(f_bmd_json) as json_data:
-        fjs = json.load(json_data)
-        json_data.close()
-    fbmd = 'Nan'
-    for dic in fjs[1]:
-        if 'vBMD_trab-eroded_median_22' in dic.keys():
-            fbmd = str(dic['vBMD_trab-eroded_median_22' ])
+
     
     fig, axs,_ = create_figure_1(dpi,drr_f,size)
     fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
@@ -519,15 +529,16 @@ def process_data_snp_sub(img_pth, msk_pth, sr_pth, ctd_pth,fimg_pth, fmsk_pth, f
     buffer_.close()
     plt.close()
     
-
     
     return bimg, b_sag_drr, f_sag_drr, bctd, fimg, bsag_img_,fsag_img_, fctd, bcor_img_, fcor_img_,bzms,fzms, size, fsize
 
 def plot_sag_labels(axs, ctd, zms, ctd_labels, size=2, text=True):
     # requires v_dict = dictionary of mask labels and a pd dataframe with labels "ctd_labels"
     for v in ctd[1:]:
-        if ctd_labels[v_dict[v[0]]].values > 0:            # handle non-existing labels
-            vert_label = np.int(ctd_labels[v_dict[v[0]]])
+        if v[0] < 8 or v[0] >28:
+            continue
+        if ctd_labels['def_'+v_dict[v[0]]].values > 0:            # handle non-existing labels
+            vert_label = np.int(ctd_labels['def_'+v_dict[v[0]]])
         else:
             vert_label = 0 
         if vert_label > 0:            
@@ -894,24 +905,36 @@ def get_paths_followup(dataset_folder, ex, rater,chunks=None, results_folder='./
         if len(unique_sessions) != 2:
             continue
         baseline_ses, followup_ses = get_baseline_fu_ses(unique_sessions)
+        print('dataset_folder ', fold)
+        print('baseline: ', baseline_ses)
+        print('fu: ', followup_ses)
+        
         
         study_dict = get_study_dict(fold, baseline_ses, followup_ses)
+        print(study_dict)
         
         for baseline_path in study_dict['baselines']:
             for followup_path in study_dict['followups']:
                 sub_path = get_sub_nifti_path(baseline_path, followup_path)
+                print('subpath ', sub_path)
                 eval_path = create_evaluation_path(results_folder, sub_path, rater)
                 if ex:
                     if os.path.isfile(eval_path):
+                        print('continued')
                         continue
+                        
                 
                 b_msk_path, b_sr_path, b_ctd_path = get_derivative_path_from_raw_ct(baseline_path)
                 f_msk_path, f_sr_path, f_ctd_path = get_derivative_path_from_raw_ct(followup_path)
                 
                 
                 if os.path.isfile(sub_path):
+                    print(baseline_path)
                     ps = [baseline_path, b_msk_path,b_sr_path,b_ctd_path,followup_path,f_msk_path,f_sr_path,f_ctd_path,sub_path]
                     paths.append(ps)
+                else:
+                    print('stoopid')
+            print('#############')
     return paths
                 
 def load_json(json_path):
@@ -939,3 +962,48 @@ def get_results_fu(path,vert):
         vert_label = ""
     return vert_label
 
+def get_csv_entry(img_path):
+    csv_name = str(os.path.basename(img_path).replace('_ct.nii.gz', ''))
+    return csv_name
+
+
+def get_paths_from_case(case_path):
+    cases = []
+    unique_sessions = [x for x in os.listdir(case_path) if 'ses' in x]
+    baseline_ses, followup_ses = get_baseline_fu_ses(unique_sessions)
+    study_dict = get_study_dict(case_path, baseline_ses, followup_ses)
+    for baseline_path in study_dict['baselines']:
+        for followup_path in study_dict['followups']:
+            sub_path = get_sub_nifti_path(baseline_path, followup_path)
+
+            if os.path.isfile(sub_path):
+                p_dict = {
+                    'b_img_pth': baseline_path,
+                    'f_img_pth': followup_path,
+                    'sub_pth'  : sub_path,
+                }
+                cases.append(p_dict)    
+    return cases
+
+def get_rater_cases_from_csv(data_frame, rater, dataset_path, exclude_rated=False):
+    labelled_IDs = pd.read_csv('./CTFU_Fx_{}.csv'.format(str(rater)))['ID'].tolist()
+    
+    rater_cases = []
+    for idx, row in data_frame.iterrows():
+        if row['rater'] == rater or row['multirater'] ==1:
+            rater_cases.append(row['case_name'])
+    rater_cases= list(set(rater_cases))
+    rater_cases.sort()
+    cases_paths = []
+    for case in rater_cases:
+        case_p = get_paths_from_case(os.path.join(os.path.join(dataset_path,'rawdata'), case))
+        if not case_p:
+            continue
+        if exclude_rated:
+            for idx,c in enumerate(case_p):
+                ID_b = os.path.basename(c['b_img_pth']).replace('_ct.nii.gz', '')
+                ID_f = os.path.basename(c['f_img_pth']).replace('_ct.nii.gz', '')
+                if ID_b in labelled_IDs and ID_f in labelled_IDs:
+                    case_p.pop(idx)
+        cases_paths = cases_paths + case_p
+    return cases_paths

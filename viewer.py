@@ -8,8 +8,13 @@ import json
 import pandas as pd
 
 class viewer:
-    def __init__(self, param_list, exclude_c=False, display_coronal=True):
-        b_img_path, f_img_path, img, fimg, sag1, sag2, zms, fzms, sub1, sub2, ctd, fctd,bcor_img_, fcor_img_, save_pth, size, fsize, zeros, load_rater, img_pth, fimg_pth = param_list
+    def __init__(self, rater_dict, save_pth, labels, exclude_c=False, display_coronal=True):
+        
+        img, sub1, sub2, ctd, fimg, sag1,sag2, fctd, bcor_img_, fcor_img_, zms, fzms, size, fsize = process_data_snp_sub(rater_dict, labels, dpi=120)
+        
+        b_img_path = rater_dict['b_img_pth']
+        f_img_path = rater_dict['f_img_pth']
+
         self.database = pd.read_csv(save_pth, dtype=str)
         self.b_img_path = b_img_path
         self.f_img_path = f_img_path
@@ -31,8 +36,8 @@ class viewer:
         self.size =size
         self.fsize =fsize
         self.display_coronal = display_coronal
-        self.bname = os.path.basename(str(img_pth)).replace('_ct.nii.gz','')
-        self.fname = os.path.basename(str(fimg_pth)).replace('_ct.nii.gz','')
+        self.bname = os.path.basename(str(b_img_path)).replace('_ct.nii.gz','')
+        self.fname = os.path.basename(str(f_img_path)).replace('_ct.nii.gz','')
         self.colors = np.array([
                                 [255,  0,  0], [  0,255,  0], [  0,  0,255], [255,255,  0], [  0,255,255],
                                 [255,  0,255], [255,239,213],  # Label 1-7 (C1-7)
@@ -77,26 +82,28 @@ class viewer:
             self.fu_presence = ""
         self.initial_disp_txt = self.bs_presence + self.fu_presence
         
-        if load_rater:
-            con_full_list = [self.v_dict[i] for i in self.full_ctd]
-            if id_bs in self.database.ID.values:
-                dictt = self.database[self.database['ID']==id_bs].replace({np.nan:''}).to_dict(orient='records')
-                self.bs_gr = {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list }
-            else:
-                self.bs_gr = {self.v_dict[i]:get_results_fu(self.b_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
+        con_full_list = [self.v_dict[i] for i in self.full_ctd]
+        if id_bs in self.database.ID.values:
             
-            if id_fu in self.database.ID.values:
-                dictt = self.database[self.database['ID']==id_fu].replace({np.nan:''}).to_dict(orient='records')
-                
-                self.fu_gr =  {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list}
-            else:
-                self.fu_gr  = {self.v_dict[i]:get_results_fu(self.f_img_path,self.v_dict[i]) for i in self.full_ctd if type(i) is not tuple}
-            
+            dictt = self.database[self.database['ID']==id_bs].replace({np.nan:''}).to_dict(orient='records')
+            self.bs_gr = {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list }
         else:
-
-            self.bs_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
+            l_dict_b = get_labels_from_imp(labels, b_img_path)
+            self.bs_gr = {i:(str(int(l_dict_b['def_'+i])) if 'def_'+i in l_dict_b else '') for i in con_full_list}
             
-            self.fu_gr = {self.v_dict[i]:'' for i in self.full_ctd if type(i) is not tuple}
+#             self.bs_gr = {self.v_dict[i]:(l_dict_b['def_'+self.v_dict[i]] if 'def_'+self.v_dict[i] in l_dict_b else '') for i in con_full_list}
+
+        if id_fu in self.database.ID.values:
+            dictt = self.database[self.database['ID']==id_fu].replace({np.nan:''}).to_dict(orient='records')
+
+            self.fu_gr =  {k: (str(v) if k in con_full_list else '') for k,v in dictt[0].items() if k in  con_full_list}
+        else:
+            l_dict_f = get_labels_from_imp(labels, f_img_path)
+            self.fu_gr = {i:(str(int(l_dict_f['def_'+i])) if 'def_'+i in l_dict_f else '') for i in con_full_list}
+
+
+
+
                          
         
 
