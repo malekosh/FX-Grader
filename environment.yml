@@ -3,13 +3,21 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - nodejs
-  - ipython=8.2.0
+  - numpy=1.21.3
+  - ipython=7.19
+  - ipykernel=5.3.4
+  - ipympl=0.6.3
+  - ipython_genutils=0.2.0
   - notebook=6.2.0
+  - nodejs
+  - jupyter_client=6.1.7
+  - jupyter_core=4.7.0
+  - jupyter_server=1.4.1
+  - jupyterlab_server=2.3.0
   - jupyterlab=3.0.9
-  - ipywidgets
-  - widgetsnbextension
-  - jupyterlab_widgets
+  - ipywidgets=7.6.3
+  - jupyterlab_widgets=1.0
+  - jupyterlab_pygments=0.1.2
   - nibabel=3.2.1
   - matplotlib=3.3.3
   - pandas=1.1.4

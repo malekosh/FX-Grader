@@ -538,7 +538,7 @@ def plot_sag_labels(axs, ctd, zms, ctd_labels, size=2, text=True):
         if v[0] < 8 or v[0] >28:
             continue
         if ctd_labels['def_'+v_dict[v[0]]].values > 0:            # handle non-existing labels
-            vert_label = np.int(ctd_labels['def_'+v_dict[v[0]]])
+            vert_label = int(ctd_labels['def_'+v_dict[v[0]]])
         else:
             vert_label = 0 
         if vert_label > 0:            
@@ -996,6 +996,9 @@ def get_rater_cases_from_csv(data_frame, rater, dataset_path, exclude_rated=Fals
     rater_cases.sort()
     cases_paths = []
     for case in rater_cases:
+        cs_pth = os.path.join(os.path.join(dataset_path,'rawdata'), case)
+        if not os.path.isdir(cs_pth):
+            continue
         case_p = get_paths_from_case(os.path.join(os.path.join(dataset_path,'rawdata'), case))
         if not case_p:
             continue
