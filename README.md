@@ -1,5 +1,9 @@
 # FX-Grader
 
+## Usage Instructions
+Please refer to the readme `helper.md` file in the repository for instructions and tips to guide you in the rating process.
+
+
 ## Dataset
 I created a resampled version of the dataset to avoid long processing times and this data can be found in `/Spine_data/Data_processed/ASL_ISO/dataset-ctfu-latest` I recomment to download this to your local machine to improve data loading efficiency and avoid permission errors in some setups.  
 
