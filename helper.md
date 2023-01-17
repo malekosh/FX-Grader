@@ -3,21 +3,33 @@ Please follow the comments in the notebook. Most important things to keep an eye
 - please choose the rater ID assigned to you
 - make sure to set the dataset path correctly
 - follow the Rating Schema set below and in the Notebook
-- don't forget to press the save button below the rating windows and wait for confirmation that the case was successfuly saved
+- To load all the cases in a given directory, set the `load_all` variable to True
+- Don't forget to press the save button below the rating windows and wait for confirmation that the case was successfuly saved (will be displayed right below the the save button)
+- To access the database directly, open the csv file generated in the same directory named CTFU_Fx_{your-rater-ID}.csv
 
 
 
 ## RATING SCHEMA
 0 - normaler WK, keine Höhenminderung, keine Metastase
+
 1 - Genant Grade 1 ohne Endplatten-Fx
+
 2 - Genant Grade 1 mit Endplatten FX
+
 3 - Genant G2
+
 4 - Genant G3
+
 5 - maligne Fraktur
+
 6 - Fremdmaterial
+
 7 - nicht-osteoporotische, nicht maligne Deformität
+
 8 - maligne ohne Fraktur
+
 9 - Fraktur unklarer Dignität
+
 
 ## Heatmap interpretation
 

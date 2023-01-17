@@ -985,12 +985,14 @@ def get_paths_from_case(case_path):
                 cases.append(p_dict)    
     return cases
 
-def get_rater_cases_from_csv(data_frame, rater, dataset_path, exclude_rated=False):
+def get_rater_cases_from_csv(data_frame, dataset_path,rater=None, load_all=False, exclude_rated=False):
     labelled_IDs = pd.read_csv('./CTFU_Fx_{}.csv'.format(str(rater)))['ID'].tolist()
     
     rater_cases = []
     for idx, row in data_frame.iterrows():
-        if row['rater'] == rater or row['multirater'] ==1:
+        if not load_all and (row['rater'] == rater or row['multirater'] ==1):
+            rater_cases.append(row['case_name'])
+        else:
             rater_cases.append(row['case_name'])
     rater_cases= list(set(rater_cases))
     rater_cases.sort()
