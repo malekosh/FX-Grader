@@ -83,6 +83,8 @@ class viewer:
         self.initial_disp_txt = self.bs_presence + self.fu_presence
         
         con_full_list = [self.v_dict[i] for i in self.full_ctd]
+        if exclude_c:
+            con_full_list = [self.v_dict[i] for i in self.full_ctd if i>7]
         if id_bs in self.database.ID.values:
             
             dictt = self.database[self.database['ID']==id_bs].replace({np.nan:''}).to_dict(orient='records')

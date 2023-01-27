@@ -12,13 +12,13 @@ Please follow the comments in the notebook. Most important things to keep an eye
 ## RATING SCHEMA
 0 - normaler WK, keine Höhenminderung, keine Metastase
 
-1 - Genant Grade 1 ohne Endplatten-Fx
+1 - Genant Grade 1 mit Endplatten FX
 
-2 - Genant Grade 1 mit Endplatten FX
+2 - Genant G2
 
-3 - Genant G2
+3 - Genant G3
 
-4 - Genant G3
+4 - (Erworbene) Schmoerl'sche Herniation
 
 5 - maligne Fraktur
 
