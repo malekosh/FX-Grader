@@ -990,10 +990,13 @@ def get_rater_cases_from_csv(data_frame, dataset_path,rater=None, load_all=False
     
     rater_cases = []
     for idx, row in data_frame.iterrows():
-        if not load_all and (row['rater'] == rater or row['multirater'] ==1):
+
+        if load_all:
             rater_cases.append(row['case_name'])
+            
         else:
-            rater_cases.append(row['case_name'])
+            if row['rater'] == rater or row['multirater'] ==1:
+                rater_cases.append(row['case_name'])
     rater_cases= list(set(rater_cases))
     rater_cases.sort()
     cases_paths = []
