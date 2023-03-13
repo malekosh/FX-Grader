@@ -267,7 +267,6 @@ def get_labels_from_csv(dataframe, case_id, exclude_cervical=False):
     verts = ['C2', 'C3', 'C4', 'C5', 'C6', 'C7', 
                    'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
                    'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'T13']
-    
     all_entries = dataframe[dataframe['ID']==case_id].to_dict(orient='records')[0]
     v_bmd = all_entries.get('vBMD_L3')
     if np.isnan(v_bmd):
@@ -535,7 +534,7 @@ def process_data_snp_sub(rater_dict, labels, dpi=120):
 def plot_sag_labels(axs, ctd, zms, ctd_labels, size=2, text=True):
     # requires v_dict = dictionary of mask labels and a pd dataframe with labels "ctd_labels"
     for v in ctd[1:]:
-        if v[0] < 8 or v[0] >28:
+        if v[0] < 8 or v[0] >28 or v[0]==26:
             continue
         if ctd_labels['def_'+v_dict[v[0]]].values > 0:            # handle non-existing labels
             vert_label = int(ctd_labels['def_'+v_dict[v[0]]])
@@ -635,6 +634,8 @@ def load_centroids(ctd_path):
         elif 'nan' in str(d):            #skipping NaN centroids
             continue
         else:
+            if d['label'] ==26:
+                continue
             ctd_list.append([d['label'], d['X'], d['Y'], d['Z']]) 
     return ctd_list
 
@@ -825,12 +826,12 @@ def sag_f(slc,img,zms):
 #     display(fig)
 
 
-v_dict = {
-    1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
-    8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
-    15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
-    21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
-}
+# v_dict = {
+#     1: 'C1', 2: 'C2', 3: 'C3', 4: 'C4', 5: 'C5', 6: 'C6', 7: 'C7',
+#     8: 'T1', 9: 'T2', 10: 'T3', 11: 'T4', 12: 'T5', 13: 'T6', 14: 'T7',
+#     15: 'T8', 16: 'T9', 17: 'T10', 18: 'T11', 19: 'T12', 20: 'L1',
+#     21: 'L2', 22: 'L3', 23: 'L4', 24: 'L5', 25: 'L6', 28: 'T13'
+# }
 def get_raw_ct_paths(directory):
     im_paths = []
     for root, dirs, files in os.walk(directory):
@@ -972,6 +973,7 @@ def get_paths_from_case(case_path):
     unique_sessions = [x for x in os.listdir(case_path) if 'ses' in x]
     baseline_ses, followup_ses = get_baseline_fu_ses(unique_sessions)
     study_dict = get_study_dict(case_path, baseline_ses, followup_ses)
+
     for baseline_path in study_dict['baselines']:
         for followup_path in study_dict['followups']:
             sub_path = get_sub_nifti_path(baseline_path, followup_path)
@@ -1001,11 +1003,21 @@ def get_rater_cases_from_csv(data_frame, dataset_path,rater=None, load_all=False
     rater_cases.sort()
     cases_paths = []
     for case in rater_cases:
-        cs_pth = os.path.join(os.path.join(dataset_path,'rawdata'), case)
+        cs_pth = os.path.join(os.path.join(dataset_path,'rawdata'), case.lower())
         if not os.path.isdir(cs_pth):
+            case = case.lower().replace('ctfu', 'ctfu0')
+            cs_pth = os.path.join(os.path.join(dataset_path,'rawdata'), case.lower())
+            if not os.path.isdir(cs_pth):
+                print(cs_pth)
+                print('cpth no ex ',case)
+                continue
+        try:
+            case_p = get_paths_from_case(os.path.join(os.path.join(dataset_path,'rawdata'), case))
+        except Exception:
+            print('No Followup Found ',case)
             continue
-        case_p = get_paths_from_case(os.path.join(os.path.join(dataset_path,'rawdata'), case))
         if not case_p:
+            print('other no fu ',case)
             continue
         if exclude_rated:
             for idx,c in enumerate(case_p):
