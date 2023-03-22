@@ -435,17 +435,16 @@ def process_data_snp_sub(rater_dict, labels, dpi=120):
     buffer_.close()
     plt.close()
     
+    if bsag_msk.shape ==res_im.shape:
+        bsag_msk[bsag_msk>0] = 2
+        res_im[res_im>0] = 1
 
-    bsag_msk[bsag_msk>0] = 2
-    res_im[res_im>0] = 1
-    
-    bsag_msk
-    bsag_msk[res_im>0]  = np.nan
-    
-    bsag_msk[bsag_msk==0] = np.nan
-    res_im[res_im==0] = np.nan
-    bsag_msk[0,0] = 1
-    res_im[0,0] = 2
+        bsag_msk[res_im>0]  = np.nan
+
+        bsag_msk[bsag_msk==0] = np.nan
+        res_im[res_im==0] = np.nan
+        bsag_msk[0,0] = 1
+        res_im[0,0] = 2
     
 
     
@@ -453,8 +452,9 @@ def process_data_snp_sub(rater_dict, labels, dpi=120):
     fig, axs, size = create_figure_1(dpi,bsag_img,size)
     fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
     axs.imshow(bsag_img, cmap=plt.cm.gray, norm=wdw_sbone)
-    axs.imshow(bsag_msk, cmap=cm_sr, alpha=0.7)
-    axs.imshow(res_im, cmap=cm_sr, alpha=0.2)
+    if bsag_msk.shape ==res_im.shape:
+        axs.imshow(bsag_msk, cmap=cm_sr, alpha=0.7)
+        axs.imshow(res_im, cmap=cm_sr, alpha=0.2)
     
     
     plot_sag_centroids(axs, new_bctd, zms)
@@ -484,24 +484,25 @@ def process_data_snp_sub(rater_dict, labels, dpi=120):
     buffer_.close()
     plt.close()
     ###################################
-    
-    bcor_msk[bcor_msk>0] = 2
-    res_cor[res_cor>0] = 1
-    
-    
-    bcor_msk[res_cor>0]  = np.nan
-    
-    bcor_msk[bcor_msk==0] = np.nan
-    res_cor[res_cor==0] = np.nan
-    bcor_msk[0,0] = 1
-    res_cor[0,0] = 2
+    if bcor_msk.shape ==res_cor.shape:
+        bcor_msk[bcor_msk>0] = 2
+        res_cor[res_cor>0] = 1
+
+
+        bcor_msk[res_cor>0]  = np.nan
+
+        bcor_msk[bcor_msk==0] = np.nan
+        res_cor[res_cor==0] = np.nan
+        bcor_msk[0,0] = 1
+        res_cor[0,0] = 2
     
     
     fig, axs,fsize = create_figure_1(dpi,bcor_img,size)
     fig.subplots_adjust(bottom=0, top=1, left=0, right=1)
     axs.imshow(bcor_img, cmap=plt.cm.gray, norm=wdw_sbone)
-    axs.imshow(bcor_msk, cmap=cm_sr, alpha=0.7)
-    axs.imshow(res_cor, cmap=cm_sr, alpha=0.2)
+    if bcor_msk.shape ==res_cor.shape:
+        axs.imshow(bcor_msk, cmap=cm_sr, alpha=0.7)
+        axs.imshow(res_cor, cmap=cm_sr, alpha=0.2)
     plot_cor_centroids(axs, new_bcent_cor, fzms)
 
     buffer_ = BytesIO()
