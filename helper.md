@@ -10,25 +10,31 @@ Please follow the comments in the notebook. Most important things to keep an eye
 
 
 ## RATING SCHEMA
-0 - normaler WK, keine Höhenminderung, keine Metastase
+Morphologic changes affecting the vertebral body:
 
-1 - Genant Grade 1 mit Endplatten FX
+0 - Normal morphology (no height loss, no severe degenerative changes, no metastasis)
 
-2 - Genant G2
+1 - Genant grade 1 (with cortical fx)
 
-3 - Genant G3
+2 - Genant grade 2
 
-4 - (Erworbene) Schmoerl'sche Herniation
+3 - Genant grade 3
 
-5 - maligne Fraktur
+4 - Schmorl's herniation (upper or lower endplate)
 
-6 - Fremdmaterial
+5 - Non-osteoporotic fx (developmental, traumatic, non-determined)
 
-7 - nicht-osteoporotische, nicht maligne Deformität
+6 - Trabecular sclerotic changes in >=1/3 of VB (eg type 3 Modic changes)
 
-8 - maligne ohne Fraktur
+7 - Lesions adjacent to cortical bone (at ligament, enthesis; DISH, ankylosing spondilitis, large bridging osteophytes affecting >=1/3 of a VB surface) 
 
-9 - Fraktur unklarer Dignität
+8 - Foreign material (PMMA, metal)
+
+9 - malignant fracture
+
+10 - Osteolytic/osteoblastic bone metastasis without fx
+
+11 - Unclear lesion to be excluded from BMD analysis (e.g. haemangioma, osteoma)
 
 
 ## Heatmap interpretation
