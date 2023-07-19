@@ -81,6 +81,10 @@ colors_labels = (1/255)*np.array([
     [166,  0,255],  #   "Label 5"
     [  0,  0,255],  #   "Label 6"
     [ 20,108,  0],  #   "Label 7"
+    [104,159, 56], #   "Label 8"
+    [255,179,  0], #   "Label 9"
+    [216, 67, 28], #   "Label 10"
+    [183, 28, 28]  #   "Label 11"
     ])
 
 
@@ -88,7 +92,7 @@ cm_labl = ListedColormap(colors_labels)
 cm_labl.set_bad(color='w', alpha=0)  # set NaN to full opacity for overlay
 
 def plot_bmd_label(axs, ctd, zms, bmd_val, size=3, text=True):
-    # requires v_dict = dictionary of mask labels and a pd dataframe with labels "ctd_labels"
+    # requires v_dict = dictionary of mask labels and a pd dataframe with labels "bmd_val"
     try:
         bmd_val = float(bmd_val)
 
@@ -267,26 +271,28 @@ def get_labels_from_csv(dataframe, case_id, exclude_cervical=False):
     verts = ['C2', 'C3', 'C4', 'C5', 'C6', 'C7', 
                    'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
                    'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'T13']
+    try:
+        all_entries = dataframe[dataframe['ID']==case_id].to_dict(orient='records')[0]
+        v_bmd = all_entries.get('vBMD_L3')
+        if np.isnan(v_bmd):
+            v_bmd = ''
     
-    all_entries = dataframe[dataframe['ID']==case_id].to_dict(orient='records')[0]
-    v_bmd = all_entries.get('vBMD_L3')
-    if np.isnan(v_bmd):
-        v_bmd = ''
-    
-        
+    except:
+        return pd.DataFrame,0
     return dataframe[dataframe['ID']==case_id], v_bmd
 
 def get_labels_from_imp(dataframe, img_path):
     verts = ['C2', 'C3', 'C4', 'C5', 'C6', 'C7', 
                    'T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12',
                    'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'T13']
-    
-    case_id =  get_csv_entry(img_path)
-    all_entries = dataframe[dataframe['ID']==case_id].to_dict(orient='records')[0]
-    
-    labels_dict = {x:y for x,y in all_entries.items() if 'def_' in x and not np.isnan(y)}
+    try:
+        case_id =  get_csv_entry(img_path)
+        all_entries = dataframe[dataframe['ID']==case_id].to_dict(orient='records')[0]
+        labels_dict = {x:y for x,y in all_entries.items() if 'def_' in x and not np.isnan(y)}
 
-        
+    except:
+        return {}
+       
     return labels_dict
 
     
@@ -536,6 +542,8 @@ def plot_sag_labels(axs, ctd, zms, ctd_labels, size=2, text=True):
     # requires v_dict = dictionary of mask labels and a pd dataframe with labels "ctd_labels"
     for v in ctd[1:]:
         if v[0] < 8 or v[0] >28:
+            continue
+        if not ('def_'+v_dict[v[0]] in ctd_labels):
             continue
         if ctd_labels['def_'+v_dict[v[0]]].values > 0:            # handle non-existing labels
             vert_label = int(ctd_labels['def_'+v_dict[v[0]]])
